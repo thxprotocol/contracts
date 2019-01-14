@@ -1,13 +1,13 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import './token/TransferLimitedToken.sol';
+import './token/ERC20/ERC20Mintable.sol';
 
+contract THXToken is ERC20Mintable {
+    string public name;
+    string public symbol;
+    uint256 public decimals;
 
-contract THXToken is TransferLimitedToken {
-    uint256 public constant SALE_END_TIME = 1538344800; // Mon, 01 Oct 2018 00:00:00 +0200
-
-    constructor(address _listener, address[] _owners, address manager) public
-        TransferLimitedToken(SALE_END_TIME, _listener, _owners, manager)
+    constructor() public
     {
         name = "THX Token";
         symbol = "THX";
