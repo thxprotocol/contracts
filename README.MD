@@ -8,8 +8,10 @@ This repository holds the smart contracts used by the THX API and the THX Client
   * Roles
     * MinterRole.sol
   * Roles.sol
-* Escrow
-  * Escrow.sol
+* Payment
+  * Escrow
+    * ConditionalEscrow.sol
+    * Escrow.sol
 * Math
   * Math.sol
   * SafeMath.sol
@@ -21,3 +23,5 @@ This repository holds the smart contracts used by the THX API and the THX Client
     * ERC20.sol
     * ERC20Mintable.sol
     * IERC20.sol
+* RewardPool.sol
+* THXToken.sol
