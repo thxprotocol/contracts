@@ -7,17 +7,18 @@ import './token/ERC20/ERC20Mintable.sol';
 contract RewardPool is ConditionalEscrow, ManagerRole {
     enum State { Pending, Approved, Rejected, Withdrawn }
 
-    event RewardWithdrawn(address indexed beneficiary, uint256 amount);
+    event RewardWithdrawn(uint256 indexed _id, uint256 payment);
 
     struct Reward {
+        uint256 id;
         string slug;
         address beneficiary;
         uint256 amount;
         State state;
     }
 
-    mapping (address => Reward) public rewards;
-    address[] public beneficiaries;
+    mapping (address => uint256[]) public beneficiaries;
+    Reward[] public rewards;
 
     string public name;
     ERC20Mintable public token;
@@ -30,10 +31,10 @@ contract RewardPool is ConditionalEscrow, ManagerRole {
 
     /**
     * @dev Checks if the reward is approved.
-    * @param payee The destination address of the reward.
+    * @param _id The id of the reward.
     */
-    function withdrawalAllowed(address payee) public view returns (bool) {
-        return rewards[payee].state == State.Approved;
+    function withdrawalAllowed(uint256 _id) public view returns (bool) {
+        return rewards[_id].state == State.Approved;
     }
 
     /**
@@ -44,66 +45,70 @@ contract RewardPool is ConditionalEscrow, ManagerRole {
     function add(string memory _slug, uint256 _amount) public {
         Reward memory reward;
 
+        reward.id = rewards.length;
         reward.slug = _slug;
         reward.beneficiary = msg.sender;
         reward.amount = _amount;
         reward.state = State.Pending;
 
-        rewards[msg.sender] = reward;
+        beneficiaries[msg.sender].push(reward.id);
 
-        beneficiaries.push(msg.sender);
+        rewards.push(reward);
     }
 
+    /**
+    * @dev Counts the amount of rewards.
+    */
     function count() public view returns (uint256 rewardCount) {
-        return beneficiaries.length;
+        return rewards.length;
     }
 
     /**
     * @dev Approves the suggested reward.
-    * @param _beneficiary The destination address of the reward.
+    * @param _id The id of the reward.
     */
-    function approve(address _beneficiary) public onlyManager {
-        rewards[_beneficiary].state = State.Approved;
+    function approve(uint256 _id) public onlyManager {
+        require(rewards[_id].state == State.Pending || rewards[_id].state == State.Rejected);
+        rewards[_id].state = State.Approved;
 
-        withdrawReward(_beneficiary);
+        withdrawReward(_id);
     }
 
     /**
     * @dev Rejects the suggested reward.
-    * @param _beneficiary The destination address of the reward.
+    * @param _id The id of the reward.
     */
-    function reject(address _beneficiary) public onlyManager {
-        rewards[_beneficiary].state = State.Rejected;
+    function reject(uint256 _id) public onlyManager {
+        require(rewards[_id].state == State.Pending || rewards[_id].state == State.Approved);
+        rewards[_id].state = State.Rejected;
     }
 
     /**
     * @dev Withdraw accumulated balance for a payee.
-    * @param _beneficiary The destination address of the reward.
+    * @param _id The id of the reward.
     */
-    function withdrawReward(address _beneficiary) public {
-        address pool = address(this);
-
+    function withdrawReward(uint256 _id) public {
         // Verify that reward is approved.
-        require(withdrawalAllowed(_beneficiary));
+        require(withdrawalAllowed(_id));
 
         // Verify that the pool address is set
-        require(pool != address(0));
+        require(address(this) != address(0));
 
         // Verify that the pool holds at least the reward size
-        uint256 payment = rewards[_beneficiary].amount;
+        uint256 payment = rewards[_id].amount;
         require(payment > 0);
 
-        uint256 tokenBalance = token.balanceOf(pool);
+        uint256 tokenBalance = token.balanceOf(address(this));
         require(tokenBalance >= payment);
 
         // Approve the token transaction.
-        token.approve(pool, payment);
+        token.approve(address(this), payment);
 
         // Transfer the tokens from the pool to the beneficiary.
-        token.transferFrom(pool, _beneficiary, payment);
+        token.transferFrom(address(this), rewards[_id].beneficiary, payment);
 
-        rewards[_beneficiary].state = State.Withdrawn;
+        rewards[_id].state = State.Withdrawn;
 
-        emit RewardWithdrawn(_beneficiary, payment);
+        emit RewardWithdrawn(_id, payment);
     }
 }
