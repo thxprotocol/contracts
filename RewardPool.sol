@@ -126,7 +126,7 @@ contract RewardPool is ManagerRole {
     */
     function approve(uint256 id) public onlyManager {
         require(rewards[id].state == State.Pending || rewards[id].state == State.Rejected);
-        require(msg.sender != rewards[id].beneficiary)
+        require(msg.sender != rewards[id].beneficiary);
 
         rewards[id].state = State.Approved;
 
@@ -140,7 +140,7 @@ contract RewardPool is ManagerRole {
     */
     function reject(uint256 id) public onlyManager {
         require(rewards[id].state == State.Pending || rewards[id].state == State.Approved);
-        
+
         rewards[id].state = State.Rejected;
     }
 
