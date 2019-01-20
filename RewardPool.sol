@@ -21,17 +21,16 @@ contract RewardPool is ManagerRole {
     }
 
     struct Transaction {
-      uint id;
+      uint256 id;
       address sender;
       address receiver;
       uint256 amount;
     }
 
-    mapping (address => uint256[]) private _deposits;
-    mapping (address => uint256[]) public beneficiaries;
+    mapping (address => uint256[]) public deposits;
+    mapping (address => uint256[]) public withdrawels;
 
-    mapping (address => Transaction[]) public transactions;
-
+    Transaction[] public transactions;
     Reward[] public rewards;
 
     THXToken public token;
@@ -44,21 +43,12 @@ contract RewardPool is ManagerRole {
     }
 
     /**
-    * @dev Returns the amount of tokens depositted by the sender.
-    * @param sender The address of the requested deposit amount.
-    */
-    function depositsOf(address sender) public view returns (uint256) {
-        return _deposits[sender];
-    }
-
-    /**
     * @dev Stores the sent amount as tokens in the Reward Pool.
+    * @param amount The amount the sender deposited.
     */
     function deposit(uint256 amount) public {
         require(token.balanceOf(msg.sender) > 0);
         require(amount > 0);
-
-        _deposits[msg.sender] = _deposits[msg.sender].add(amount);
 
         // Approve the token transaction.
         token.approveDeposit(msg.sender, address(this), amount);
@@ -67,46 +57,8 @@ contract RewardPool is ManagerRole {
 
         emit Deposited(msg.sender, amount);
 
-        _register(msg.sender, address(this), amount);
-    }
-
-    function _register(address sender, address receiver, uint256 amount) internal {
-      Transaction memory transaction;
-
-      transaction.id = transactions[sender].length;
-      transaction.sender = sender;
-      transaction.receiver = receiver;
-      transaction.amount = amount;
-
-      transactions[sender].push(transaction);
-    }
-
-    /**
-    * @dev Withdraw accumulated balance for a payee.
-    * @param id The id of the reward.
-    */
-    function _withdraw(uint256 id) internal {
-        uint256 amount = rewards[id].amount;
-        address beneficiary = rewards[id].beneficiary;
-        uint256 tokenBalance = token.balanceOf(address(this));
-
-        require(address(this) != address(0));
-        require(withdrawalAllowed(id));
-        require(amount > 0);
-        require(tokenBalance >= amount);
-
-        // Approve the token transaction.
-        token.approve(address(this), amount);
-        // Transfer the tokens from the pool to the beneficiary.
-        token.transferFrom(address(this), beneficiary, amount);
-
-        _deposits[beneficiary] = 0;
-
-        rewards[id].state = State.Withdrawn;
-
-        emit Withdrawn(beneficiary, amount, id);
-
-        _register(address(this), rewards[id].beneficiary, amount);
+        uint256 tid = _registerTransaction(msg.sender, address(this), amount);
+        deposits[msg.sender].push(tid);
     }
 
     /**
@@ -131,30 +83,7 @@ contract RewardPool is ManagerRole {
         reward.amount = amount;
         reward.state = State.Pending;
 
-        beneficiaries[msg.sender].push(reward.id);
-
         rewards.push(reward);
-    }
-
-    /**
-    * @dev Counts the amount of rewards.
-    */
-    function countRewards() public view returns (uint256 rewardCount) {
-        return rewards.length;
-    }
-
-    /**
-    * @dev Counts the amount of transactions.
-    */
-    function countMyRewards() public view returns (uint256 beneficiaryRewardCount) {
-        return beneficiaries[msg.sender].length;
-    }
-
-    /**
-    * @dev Counts the amount of transactions.
-    */
-    function countMyTransactions() public view returns (uint256 transactionCount) {
-        return transactions[msg.sender].length;
     }
 
     /**
@@ -181,4 +110,77 @@ contract RewardPool is ManagerRole {
         rewards[id].state = State.Rejected;
     }
 
+    /**
+    * @dev Counts the amount of rewards.
+    */
+    function countRewards() public view returns (uint256 rewardCount) {
+        return rewards.length;
+    }
+
+    /**
+    * @dev Counts the amount of rewards.
+    */
+    function countTransactions() public view returns (uint256 transactionCount) {
+        return transactions.length;
+    }
+
+    /**
+    * @dev Counts the amount of transactions.
+    */
+    function countSenderDeposits() public view returns (uint256 senderDepositCount) {
+        return deposits[msg.sender].length;
+    }
+
+    /**
+    * @dev Counts the amount of transactions.
+    */
+    function countSenderWithdrawels() public view returns (uint256 senderWithdrawelCount) {
+        return withdrawels[msg.sender].length;
+    }
+
+    /**
+    * @dev Registers a transaction.
+    * @param sender The address of the sender.
+    * @param receiver The address of the receiver.
+    * @param amount The amount the sender sent to the receiver.
+    */
+    function _registerTransaction(address sender, address receiver, uint256 amount) internal returns (uint256) {
+        Transaction memory transaction;
+
+        transaction.id = transactions.length;
+        transaction.sender = sender;
+        transaction.receiver = receiver;
+        transaction.amount = amount;
+
+        transactions.push(transaction);
+
+        return transaction.id;
+    }
+
+    /**
+    * @dev Withdraw accumulated balance for a beneficiary.
+    * @param id The id of the reward.
+    */
+    function _withdraw(uint256 id) internal {
+        uint256 amount = rewards[id].amount;
+        address beneficiary = rewards[id].beneficiary;
+        uint256 tokenBalance = token.balanceOf(address(this));
+
+        require(address(this) != address(0));
+        require(withdrawalAllowed(id));
+        require(amount > 0);
+        require(tokenBalance >= amount);
+
+        // Approve the token transaction.
+        token.approve(address(this), amount);
+        // Transfer the tokens from the pool to the beneficiary.
+        token.transferFrom(address(this), beneficiary, amount);
+
+        rewards[id].state = State.Withdrawn;
+
+        emit Withdrawn(beneficiary, amount, id);
+
+        uint256 tid = _registerTransaction(address(this), beneficiary, amount);
+        withdrawels[beneficiary].push(tid);
+    }
 }
