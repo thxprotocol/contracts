@@ -114,36 +114,36 @@ contract RewardPool is ManagerRole {
     /**
     * @dev Counts the amount of rewards.
     */
-    function countRewards() public view returns (uint256 rewardCount) {
+    function countRewards() public view returns (uint256) {
         return rewards.length;
-    }
-
-    /**
-    * @dev Counts the amount of rewards for a certain Beneficiary.
-    */
-    function countSenderRewards() public view returns (uint256 rewardSenderCount) {
-        return beneficiaries[msg.sender].length;
     }
 
     /**
     * @dev Counts the amount of rewards.
     */
-    function countTransactions() public view returns (uint256 transactionCount) {
+    function countTransactions() public view returns (uint256) {
         return transactions.length;
     }
 
     /**
-    * @dev Counts the amount of transactions.
+    * @dev Counts the amount of rewards for a certain Beneficiary.
     */
-    function countSenderDeposits() public view returns (uint256 senderDepositCount) {
-        return deposits[msg.sender].length;
+    function countRewardsOf(address sender) public view returns (uint256) {
+        return beneficiaries[sender].length;
     }
 
     /**
-    * @dev Counts the amount of transactions.
+    * @dev Counts the amount of deposits.
     */
-    function countSenderWithdrawels() public view returns (uint256 senderWithdrawelCount) {
-        return withdrawels[msg.sender].length;
+    function countDepositsOf(address sender) public view returns (uint256) {
+        return deposits[sender].length;
+    }
+
+    /**
+    * @dev Counts the amount of withdrawels.
+    */
+    function countWithdrawelsOf(address sender) public view returns (uint256) {
+        return withdrawels[sender].length;
     }
 
     /**
@@ -188,8 +188,9 @@ contract RewardPool is ManagerRole {
 
         emit Withdrawn(beneficiary, amount, id);
 
+        beneficiaries[beneficiary].push(id);
+
         uint256 tid = _registerTransaction(address(this), beneficiary, amount);
         withdrawels[beneficiary].push(tid);
-        beneficiaries[beneficiary].push(id);
     }
 }
