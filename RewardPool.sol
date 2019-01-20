@@ -29,6 +29,7 @@ contract RewardPool is ManagerRole {
 
     mapping (address => uint256[]) public deposits;
     mapping (address => uint256[]) public withdrawels;
+    mapping (address => uint256[]) public beneficiaries;
 
     Transaction[] public transactions;
     Reward[] public rewards;
@@ -118,6 +119,13 @@ contract RewardPool is ManagerRole {
     }
 
     /**
+    * @dev Counts the amount of rewards for a certain Beneficiary.
+    */
+    function countSenderRewards() public view returns (uint256 rewardSenderCount) {
+        return beneficiaries[msg.sender].length;
+    }
+
+    /**
     * @dev Counts the amount of rewards.
     */
     function countTransactions() public view returns (uint256 transactionCount) {
@@ -182,5 +190,6 @@ contract RewardPool is ManagerRole {
 
         uint256 tid = _registerTransaction(address(this), beneficiary, amount);
         withdrawels[beneficiary].push(tid);
+        beneficiaries[beneficiary].push(id);
     }
 }
