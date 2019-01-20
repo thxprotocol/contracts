@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import './access/roles/ManagerRole.sol';
 import "./math/SafeMath.sol";
-import './token/ERC20/ERC20Mintable.sol';
+import './THXToken.sol';
 
 contract RewardPool is ManagerRole {
     using SafeMath for uint256;
@@ -20,18 +20,27 @@ contract RewardPool is ManagerRole {
         State state;
     }
 
-    mapping (address => uint256) private _deposits;
+    struct Transaction {
+      uint id;
+      address sender;
+      address receiver;
+      uint256 amount;
+    }
+
+    mapping (address => uint256[]) private _deposits;
     mapping (address => uint256[]) public beneficiaries;
+
+    mapping (address => Transaction[]) public transactions;
 
     Reward[] public rewards;
 
-    ERC20Mintable public token;
+    THXToken public token;
     string public name;
 
     constructor(string memory _name, address _tokenAddress) public
     {
         name = _name;
-        token = ERC20Mintable(_tokenAddress);
+        token = THXToken(_tokenAddress);
     }
 
     /**
@@ -44,20 +53,32 @@ contract RewardPool is ManagerRole {
 
     /**
     * @dev Stores the sent amount as tokens in the Reward Pool.
-    * @param amount The amount the sender deposits.
     */
     function deposit(uint256 amount) public {
+        require(token.balanceOf(msg.sender) > 0);
         require(amount > 0);
 
         _deposits[msg.sender] = _deposits[msg.sender].add(amount);
 
         // Approve the token transaction.
-        token.approve(msg.sender, amount);
-
+        token.approveDeposit(msg.sender, address(this), amount);
         // Transfer the tokens from the sender to the pool
-        token.transferFrom(msg.sender, address(this), amount);
+        token.transferDeposit(msg.sender, address(this), amount);
 
         emit Deposited(msg.sender, amount);
+
+        _register(msg.sender, address(this), amount);
+    }
+
+    function _register(address sender, address receiver, uint256 amount) internal {
+      Transaction memory transaction;
+
+      transaction.id = transactions[sender].length;
+      transaction.sender = sender;
+      transaction.receiver = receiver;
+      transaction.amount = amount;
+
+      transactions[sender].push(transaction);
     }
 
     /**
@@ -84,6 +105,8 @@ contract RewardPool is ManagerRole {
         rewards[id].state = State.Withdrawn;
 
         emit Withdrawn(beneficiary, amount, id);
+
+        _register(address(this), rewards[id].beneficiary, amount);
     }
 
     /**
@@ -116,8 +139,22 @@ contract RewardPool is ManagerRole {
     /**
     * @dev Counts the amount of rewards.
     */
-    function count() public view returns (uint256 rewardCount) {
+    function countRewards() public view returns (uint256 rewardCount) {
         return rewards.length;
+    }
+
+    /**
+    * @dev Counts the amount of transactions.
+    */
+    function countMyRewards() public view returns (uint256 beneficiaryRewardCount) {
+        return beneficiaries[msg.sender].length;
+    }
+
+    /**
+    * @dev Counts the amount of transactions.
+    */
+    function countMyTransactions() public view returns (uint256 transactionCount) {
+        return transactions[msg.sender].length;
     }
 
     /**
