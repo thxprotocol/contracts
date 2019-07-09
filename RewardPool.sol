@@ -7,17 +7,24 @@ import './THXToken.sol';
 contract RewardPool is ManagerRole {
     using SafeMath for uint256;
 
-    event Deposited(address indexed sender, uint256 amount);
-    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id);
-
-    enum State { Pending, Approved, Rejected, Withdrawn }
-
     struct Reward {
         uint256 id;
+        string key;
         string slug;
         address beneficiary;
         uint256 amount;
-        State state;
+        RewardState state;
+        uint256 created;
+    }
+
+    struct Rule {
+        uint256 id;
+        string key;
+        string slug;
+        uint256 amount;
+        RuleState state;
+        address creator;
+        uint256 created;
     }
 
     struct Transaction {
@@ -27,12 +34,22 @@ contract RewardPool is ManagerRole {
       uint256 amount;
     }
 
+    event Deposited(address indexed sender, uint256 amount);
+    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id);
+
+    event RewardStateChange(uint256 id, string key, string slug, address beneficiary, uint256 amount, RewardState state, uint256 created);
+    event RuleStateChange(uint256 id, string key, string slug, uint256 amount, RuleState state, address creator, uint256 created);
+
+    enum RewardState { Pending, Approved, Rejected, Withdrawn }
+    enum RuleState { Pending, Active, Disabled }
+
     mapping (address => uint256[]) public deposits;
     mapping (address => uint256[]) public withdrawels;
     mapping (address => uint256[]) public beneficiaries;
 
     Transaction[] public transactions;
     Reward[] public rewards;
+    Rule[] public rules;
 
     THXToken public token;
     string public name;
@@ -67,22 +84,84 @@ contract RewardPool is ManagerRole {
     * @param id The id of the reward.
     */
     function withdrawalAllowed(uint256 id) public view returns (bool) {
-        return rewards[id].state == State.Approved;
+        return rewards[id].state == RewardState.Approved;
+    }
+
+    /**
+    * @dev Creates the initial reward rule.
+    * @param key Database reference for rule metadata.
+    * @param slug Short readable description of rule.
+    * @param amount Reward size suggested for the beneficiary.
+    */
+    function addRule(string memory key, string memory slug, uint256 amount) public {
+        Rule memory rule;
+
+        rule.id = rules.length;
+        rule.key = key;
+        rule.slug = slug;
+        rule.amount = amount;
+        rule.state = RuleState.Pending;
+        rule.creator = msg.sender;
+        rule.created = now;
+
+        emit RuleStateChange(rule.id, rule.key, rule.slug, rule.amount, rule.state, rule.creator, rule.created);
+
+        rules.push(rule);
+    }
+
+    /**
+    * @dev Updates the pool name set initially through the constructor.
+    * @param value The new pool name.
+    */
+    function updatePoolName(string memory value) public onlyManager {
+        name = value;
+    }
+
+    /**
+    * @dev Approves the suggested reward rule and sets its state to Active.
+    * @param id The id of the reward.
+    */
+    function approveRule(uint256 id) public onlyManager {
+        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Disabled);
+
+        rules[id].state = RuleState.Active;
+    }
+
+    /**
+    * @dev Rejects the suggested reward and sets the state to Disabled.
+    * @param id The id of the reward.
+    */
+    function rejectRule(uint256 id) public onlyManager {
+        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Active);
+
+        rules[id].state = RuleState.Disabled;
+    }
+
+    /**
+    * @dev Counts the amount of rules.
+    */
+    function countRules() public view returns (uint256) {
+        return rules.length;
     }
 
     /**
     * @dev Creates the suggested reward.
-    * @param slug Short name for the reward.
+    * @param key Database reference for reward metadata.
+    * @param slug Short readable description of reward.
     * @param amount Reward size suggested for the beneficiary.
     */
-    function add(string memory slug, uint256 amount) public {
+    function addReward(string memory key, string memory slug, uint256 amount) public {
         Reward memory reward;
 
         reward.id = rewards.length;
+        reward.key = key;
         reward.slug = slug;
         reward.beneficiary = msg.sender;
         reward.amount = amount;
-        reward.state = State.Pending;
+        reward.state = RewardState.Pending;
+        reward.created = now;
+
+        emit RewardStateChange(reward.id, reward.key, reward.slug, reward.beneficiary, reward.amount, reward.state, reward.created);
 
         rewards.push(reward);
     }
@@ -91,11 +170,11 @@ contract RewardPool is ManagerRole {
     * @dev Approves the suggested reward.
     * @param id The id of the reward.
     */
-    function approve(uint256 id) public onlyManager {
-        require(rewards[id].state == State.Pending || rewards[id].state == State.Rejected);
+    function approveReward(uint256 id) public onlyManager {
+        require(rewards[id].state == RewardState.Pending || rewards[id].state == RewardState.Rejected);
         require(msg.sender != rewards[id].beneficiary);
 
-        rewards[id].state = State.Approved;
+        rewards[id].state = RewardState.Approved;
 
         // Withdraw the reward
         _withdraw(id);
@@ -105,10 +184,10 @@ contract RewardPool is ManagerRole {
     * @dev Rejects the suggested reward.
     * @param id The id of the reward.
     */
-    function reject(uint256 id) public onlyManager {
-        require(rewards[id].state == State.Pending || rewards[id].state == State.Approved);
+    function rejectReward(uint256 id) public onlyManager {
+        require(rewards[id].state == RewardState.Pending || rewards[id].state == RewardState.Approved);
 
-        rewards[id].state = State.Rejected;
+        rewards[id].state = RewardState.Rejected;
     }
 
     /**
@@ -184,7 +263,7 @@ contract RewardPool is ManagerRole {
         // Transfer the tokens from the pool to the beneficiary.
         token.transferFrom(address(this), beneficiary, amount);
 
-        rewards[id].state = State.Withdrawn;
+        rewards[id].state = RewardState.Withdrawn;
 
         emit Withdrawn(beneficiary, amount, id);
 
