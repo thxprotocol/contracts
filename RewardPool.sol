@@ -32,13 +32,14 @@ contract RewardPool is ManagerRole {
       address sender;
       address receiver;
       uint256 amount;
+      uint256 created;
     }
 
-    event Deposited(address indexed sender, uint256 amount);
-    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id);
+    event Deposited(address indexed sender, uint256 amount, uint256 created);
+    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
 
-    event RewardStateChange(uint256 id, string key, string slug, address beneficiary, uint256 amount, RewardState state, uint256 created);
-    event RuleStateChange(uint256 id, string key, string slug, uint256 amount, RuleState state, address creator, uint256 created);
+    event RewardStateChanged(uint256 id, string key, string slug, address beneficiary, uint256 amount, RewardState state, uint256 created);
+    event RuleStateChanged(uint256 id, string key, string slug, uint256 amount, RuleState state, address creator, uint256 created);
 
     enum RewardState { Pending, Approved, Rejected, Withdrawn }
     enum RuleState { Pending, Active, Disabled }
@@ -73,9 +74,9 @@ contract RewardPool is ManagerRole {
         // Transfer the tokens from the sender to the pool
         token.transferDeposit(msg.sender, address(this), amount);
 
-        emit Deposited(msg.sender, amount);
+        emit Deposited(msg.sender, amount, now);
 
-        uint256 tid = _registerTransaction(msg.sender, address(this), amount);
+        uint256 tid = _registerTransaction(msg.sender, address(this), amount, now);
         deposits[msg.sender].push(tid);
     }
 
@@ -104,7 +105,7 @@ contract RewardPool is ManagerRole {
         rule.creator = msg.sender;
         rule.created = now;
 
-        emit RuleStateChange(rule.id, rule.key, rule.slug, rule.amount, rule.state, rule.creator, rule.created);
+        emit RuleStateChanged(rule.id, rule.key, rule.slug, rule.amount, rule.state, rule.creator, rule.created);
 
         rules.push(rule);
     }
@@ -123,8 +124,9 @@ contract RewardPool is ManagerRole {
     */
     function approveRule(uint256 id) public onlyManager {
         require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Disabled);
-
         rules[id].state = RuleState.Active;
+
+        emit RuleStateChanged(rules[id].id, rules[id].key, rules[id].slug, rules[id].amount, rules[id].state, rules[id].creator, rules[id].created);
     }
 
     /**
@@ -161,7 +163,7 @@ contract RewardPool is ManagerRole {
         reward.state = RewardState.Pending;
         reward.created = now;
 
-        emit RewardStateChange(reward.id, reward.key, reward.slug, reward.beneficiary, reward.amount, reward.state, reward.created);
+        emit RewardStateChanged(reward.id, reward.key, reward.slug, reward.beneficiary, reward.amount, reward.state, reward.created);
 
         rewards.push(reward);
     }
@@ -178,6 +180,8 @@ contract RewardPool is ManagerRole {
 
         // Withdraw the reward
         _withdraw(id);
+
+        emit RewardStateChanged(rewards[id].id, rewards[id].key, rewards[id].slug, rewards[id].beneficiary, rewards[id].amount, rewards[id].state, rewards[id].created);
     }
 
     /**
@@ -188,6 +192,8 @@ contract RewardPool is ManagerRole {
         require(rewards[id].state == RewardState.Pending || rewards[id].state == RewardState.Approved);
 
         rewards[id].state = RewardState.Rejected;
+
+        emit RewardStateChanged(rewards[id].id, rewards[id].key, rewards[id].slug, rewards[id].beneficiary, rewards[id].amount, rewards[id].state, rewards[id].created);
     }
 
     /**
@@ -231,13 +237,14 @@ contract RewardPool is ManagerRole {
     * @param receiver The address of the receiver.
     * @param amount The amount the sender sent to the receiver.
     */
-    function _registerTransaction(address sender, address receiver, uint256 amount) internal returns (uint256) {
+    function _registerTransaction(address sender, address receiver, uint256 amount, uint256 created) internal returns (uint256) {
         Transaction memory transaction;
 
         transaction.id = transactions.length;
         transaction.sender = sender;
         transaction.receiver = receiver;
         transaction.amount = amount;
+        transaction.created = created;
 
         transactions.push(transaction);
 
@@ -265,11 +272,11 @@ contract RewardPool is ManagerRole {
 
         rewards[id].state = RewardState.Withdrawn;
 
-        emit Withdrawn(beneficiary, amount, id);
+        emit Withdrawn(beneficiary, amount, id, now);
 
         beneficiaries[beneficiary].push(id);
 
-        uint256 tid = _registerTransaction(address(this), beneficiary, amount);
+        uint256 tid = _registerTransaction(address(this), beneficiary, amount, now);
         withdrawels[beneficiary].push(tid);
     }
 }
