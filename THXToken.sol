@@ -3,14 +3,18 @@ pragma solidity ^0.5.0;
 import './token/ERC20/ERC20Mintable.sol';
 
 contract THXToken is ERC20Mintable {
+    // Transfer Gateway contract address
+    address public gateway;
+
     string public name;
     string public symbol;
     uint256 public decimals;
 
     mapping (address => mapping (address => uint256)) private _allowedDeposits;
 
-    constructor() public
-    {
+    constructor(address _gateway) public {
+        gateway = _gateway;
+
         name = "THX Token";
         symbol = "THX";
         decimals = 18;
@@ -29,6 +33,12 @@ contract THXToken is ERC20Mintable {
         _transfer(from, to, value);
         emit Approval(from, to, _allowedDeposits[from][to]);
         return true;
+    }
+
+    // Called by the gateway contract to mint tokens that have been deposited to the Mainnet gateway.
+    function mintToGateway(uint256 _amount) public {
+        require(msg.sender == gateway);
+        _mint(gateway, _amount);
     }
 
 }
