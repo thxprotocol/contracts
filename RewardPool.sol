@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import './access/roles/ManagerRole.sol';
-import "./math/SafeMath.sol";
+import './math/SafeMath.sol';
 import './THXToken.sol';
 
 contract RewardPool is ManagerRole {
@@ -9,7 +9,6 @@ contract RewardPool is ManagerRole {
 
     struct Reward {
         uint256 id;
-        string key;
         string slug;
         address beneficiary;
         uint256 amount;
@@ -19,7 +18,6 @@ contract RewardPool is ManagerRole {
 
     struct Rule {
         uint256 id;
-        string key;
         string slug;
         uint256 amount;
         RuleState state;
@@ -27,28 +25,16 @@ contract RewardPool is ManagerRole {
         uint256 created;
     }
 
-    struct Transaction {
-      uint256 id;
-      address sender;
-      address receiver;
-      uint256 amount;
-      uint256 created;
-    }
-
-    event Deposited(address indexed sender, uint256 amount, uint256 created);
-    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
-
-    event RewardStateChanged(uint256 id, string key, string slug, address beneficiary, uint256 amount, RewardState state, uint256 created);
-    event RuleStateChanged(uint256 id, string key, string slug, uint256 amount, RuleState state, address creator, uint256 created);
-
     enum RewardState { Pending, Approved, Rejected, Withdrawn }
     enum RuleState { Pending, Active, Disabled }
 
-    mapping (address => uint256[]) public deposits;
-    mapping (address => uint256[]) public withdrawels;
+    event Deposited(address indexed sender, uint256 amount, uint256 created);
+    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
+    event RewardStateChanged(uint256 id, RewardState state);
+    event RuleStateChanged(uint256 id, RuleState state);
+
     mapping (address => uint256[]) public beneficiaries;
 
-    Transaction[] public transactions;
     Reward[] public rewards;
     Rule[] public rules;
 
@@ -71,13 +57,11 @@ contract RewardPool is ManagerRole {
 
         // Approve the token transaction.
         token.approveDeposit(msg.sender, address(this), amount);
+
         // Transfer the tokens from the sender to the pool
         token.transferDeposit(msg.sender, address(this), amount);
 
         emit Deposited(msg.sender, amount, now);
-
-        uint256 tid = _registerTransaction(msg.sender, address(this), amount, now);
-        deposits[msg.sender].push(tid);
     }
 
     /**
@@ -90,22 +74,20 @@ contract RewardPool is ManagerRole {
 
     /**
     * @dev Creates the initial reward rule.
-    * @param key Database reference for rule metadata.
     * @param slug Short readable description of rule.
     * @param amount Reward size suggested for the beneficiary.
     */
-    function addRule(string memory key, string memory slug, uint256 amount) public {
+    function addRule(string memory slug, uint256 amount) public {
         Rule memory rule;
 
         rule.id = rules.length;
-        rule.key = key;
         rule.slug = slug;
         rule.amount = amount;
         rule.state = RuleState.Pending;
         rule.creator = msg.sender;
         rule.created = now;
 
-        emit RuleStateChanged(rule.id, rule.key, rule.slug, rule.amount, rule.state, rule.creator, rule.created);
+        emit RuleStateChanged(rule.id, rule.state);
 
         rules.push(rule);
     }
@@ -126,7 +108,7 @@ contract RewardPool is ManagerRole {
         require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Disabled);
         rules[id].state = RuleState.Active;
 
-        emit RuleStateChanged(rules[id].id, rules[id].key, rules[id].slug, rules[id].amount, rules[id].state, rules[id].creator, rules[id].created);
+        emit RuleStateChanged(rules[id].id, rules[id].state);
     }
 
     /**
@@ -148,22 +130,20 @@ contract RewardPool is ManagerRole {
 
     /**
     * @dev Creates the suggested reward.
-    * @param key Database reference for reward metadata.
     * @param slug Short readable description of reward.
     * @param amount Reward size suggested for the beneficiary.
     */
-    function addReward(string memory key, string memory slug, uint256 amount) public {
+    function addReward(string memory slug, uint256 amount) public {
         Reward memory reward;
 
         reward.id = rewards.length;
-        reward.key = key;
         reward.slug = slug;
         reward.beneficiary = msg.sender;
         reward.amount = amount;
         reward.state = RewardState.Pending;
         reward.created = now;
 
-        emit RewardStateChanged(reward.id, reward.key, reward.slug, reward.beneficiary, reward.amount, reward.state, reward.created);
+        emit RewardStateChanged(reward.id, reward.state);
 
         rewards.push(reward);
     }
@@ -181,7 +161,7 @@ contract RewardPool is ManagerRole {
         // Withdraw the reward
         _withdraw(id);
 
-        emit RewardStateChanged(rewards[id].id, rewards[id].key, rewards[id].slug, rewards[id].beneficiary, rewards[id].amount, rewards[id].state, rewards[id].created);
+        emit RewardStateChanged(rewards[id].id, rewards[id].state);
     }
 
     /**
@@ -193,7 +173,7 @@ contract RewardPool is ManagerRole {
 
         rewards[id].state = RewardState.Rejected;
 
-        emit RewardStateChanged(rewards[id].id, rewards[id].key, rewards[id].slug, rewards[id].beneficiary, rewards[id].amount, rewards[id].state, rewards[id].created);
+        emit RewardStateChanged(rewards[id].id, rewards[id].state);
     }
 
     /**
@@ -204,51 +184,10 @@ contract RewardPool is ManagerRole {
     }
 
     /**
-    * @dev Counts the amount of rewards.
-    */
-    function countTransactions() public view returns (uint256) {
-        return transactions.length;
-    }
-
-    /**
     * @dev Counts the amount of rewards for a certain Beneficiary.
     */
     function countRewardsOf(address sender) public view returns (uint256) {
         return beneficiaries[sender].length;
-    }
-
-    /**
-    * @dev Counts the amount of deposits.
-    */
-    function countDepositsOf(address sender) public view returns (uint256) {
-        return deposits[sender].length;
-    }
-
-    /**
-    * @dev Counts the amount of withdrawels.
-    */
-    function countWithdrawelsOf(address sender) public view returns (uint256) {
-        return withdrawels[sender].length;
-    }
-
-    /**
-    * @dev Registers a transaction.
-    * @param sender The address of the sender.
-    * @param receiver The address of the receiver.
-    * @param amount The amount the sender sent to the receiver.
-    */
-    function _registerTransaction(address sender, address receiver, uint256 amount, uint256 created) internal returns (uint256) {
-        Transaction memory transaction;
-
-        transaction.id = transactions.length;
-        transaction.sender = sender;
-        transaction.receiver = receiver;
-        transaction.amount = amount;
-        transaction.created = created;
-
-        transactions.push(transaction);
-
-        return transaction.id;
     }
 
     /**
@@ -275,8 +214,5 @@ contract RewardPool is ManagerRole {
         emit Withdrawn(beneficiary, amount, id, now);
 
         beneficiaries[beneficiary].push(id);
-
-        uint256 tid = _registerTransaction(address(this), beneficiary, amount, now);
-        withdrawels[beneficiary].push(tid);
     }
 }
