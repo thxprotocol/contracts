@@ -1,50 +1,34 @@
 pragma solidity ^0.5.0;
 
-import './access/roles/ManagerRole.sol';
-import './math/SafeMath.sol';
+import './reward/Reward.sol';
+import './rule/Rules.sol';
 import './THXToken.sol';
 
-contract RewardPool is ManagerRole {
-    using SafeMath for uint256;
-
-    struct Reward {
-        uint256 id;
-        string slug;
-        address beneficiary;
-        uint256 amount;
-        RewardState state;
-        uint256 created;
-    }
-
-    struct Rule {
-        uint256 id;
-        string slug;
-        uint256 amount;
-        RuleState state;
-        address creator;
-        uint256 created;
-    }
-
-    enum RewardState { Pending, Approved, Rejected, Withdrawn }
-    enum RuleState { Pending, Active, Disabled }
+contract RewardPool is ManagerRole, Rules {
 
     event Deposited(address indexed sender, uint256 amount, uint256 created);
     event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
-    event RewardStateChanged(uint256 id, RewardState state);
-    event RuleStateChanged(uint256 id, RuleState state);
 
-    mapping (address => uint256[]) public beneficiaries;
-
-    Reward[] public rewards;
-    Rule[] public rules;
+    event RewardPollFinished(uint256 id, bool approved);
 
     THXToken public token;
     string public name;
+    address public creator;
 
-    constructor(string memory _name, address _tokenAddress) public
-    {
+    Reward[] public rewards;
+
+    constructor(string memory _name, address _tokenAddress) public {
         name = _name;
         token = THXToken(_tokenAddress);
+        creator = msg.sender;
+    }
+
+    /**
+    * @dev Updates the pool name set initially through the constructor.
+    * @param value The new pool name.
+    */
+    function updatePoolName(string memory value) public onlyManager {
+        name = value;
     }
 
     /**
@@ -65,118 +49,6 @@ contract RewardPool is ManagerRole {
     }
 
     /**
-    * @dev Checks if the reward is approved.
-    * @param id The id of the reward.
-    */
-    function withdrawalAllowed(uint256 id) public view returns (bool) {
-        return rewards[id].state == RewardState.Approved;
-    }
-
-    /**
-    * @dev Creates the initial reward rule.
-    * @param slug Short readable description of rule.
-    * @param amount Reward size suggested for the beneficiary.
-    */
-    function addRule(string memory slug, uint256 amount) public {
-        Rule memory rule;
-
-        rule.id = rules.length;
-        rule.slug = slug;
-        rule.amount = amount;
-        rule.state = RuleState.Pending;
-        rule.creator = msg.sender;
-        rule.created = now;
-
-        emit RuleStateChanged(rule.id, rule.state);
-
-        rules.push(rule);
-    }
-
-    /**
-    * @dev Updates the pool name set initially through the constructor.
-    * @param value The new pool name.
-    */
-    function updatePoolName(string memory value) public onlyManager {
-        name = value;
-    }
-
-    /**
-    * @dev Approves the suggested reward rule and sets its state to Active.
-    * @param id The id of the reward.
-    */
-    function approveRule(uint256 id) public onlyManager {
-        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Disabled);
-        rules[id].state = RuleState.Active;
-
-        emit RuleStateChanged(rules[id].id, rules[id].state);
-    }
-
-    /**
-    * @dev Rejects the suggested reward and sets the state to Disabled.
-    * @param id The id of the reward.
-    */
-    function rejectRule(uint256 id) public onlyManager {
-        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Active);
-
-        rules[id].state = RuleState.Disabled;
-    }
-
-    /**
-    * @dev Counts the amount of rules.
-    */
-    function countRules() public view returns (uint256) {
-        return rules.length;
-    }
-
-    /**
-    * @dev Creates the suggested reward.
-    * @param slug Short readable description of reward.
-    * @param amount Reward size suggested for the beneficiary.
-    */
-    function addReward(string memory slug, uint256 amount) public {
-        Reward memory reward;
-
-        reward.id = rewards.length;
-        reward.slug = slug;
-        reward.beneficiary = msg.sender;
-        reward.amount = amount;
-        reward.state = RewardState.Pending;
-        reward.created = now;
-
-        emit RewardStateChanged(reward.id, reward.state);
-
-        rewards.push(reward);
-    }
-
-    /**
-    * @dev Approves the suggested reward.
-    * @param id The id of the reward.
-    */
-    function approveReward(uint256 id) public onlyManager {
-        require(rewards[id].state == RewardState.Pending || rewards[id].state == RewardState.Rejected);
-        require(msg.sender != rewards[id].beneficiary);
-
-        rewards[id].state = RewardState.Approved;
-
-        // Withdraw the reward
-        _withdraw(id);
-
-        emit RewardStateChanged(rewards[id].id, rewards[id].state);
-    }
-
-    /**
-    * @dev Rejects the suggested reward.
-    * @param id The id of the reward.
-    */
-    function rejectReward(uint256 id) public onlyManager {
-        require(rewards[id].state == RewardState.Pending || rewards[id].state == RewardState.Approved);
-
-        rewards[id].state = RewardState.Rejected;
-
-        emit RewardStateChanged(rewards[id].id, rewards[id].state);
-    }
-
-    /**
     * @dev Counts the amount of rewards.
     */
     function countRewards() public view returns (uint256) {
@@ -184,35 +56,45 @@ contract RewardPool is ManagerRole {
     }
 
     /**
-    * @dev Counts the amount of rewards for a certain Beneficiary.
+    * @dev Creates the suggested reward.
+    * @param slug Short readable description of reward.
+    * @param amount Reward size suggested for the beneficiary.
     */
-    function countRewardsOf(address sender) public view returns (uint256) {
-        return beneficiaries[sender].length;
+    function createReward(string memory slug, uint256 amount) public {
+        Reward reward = new Reward(rewards.length, slug, msg.sender, amount, address(token), address(this));
+        rewards.push(reward);
+    }
+
+    /**
+    * @dev Called when poll is finished
+    * @param agree Bool for checking the result of the poll.
+    */
+    function onRewardPollFinish(uint256 id, bool agree) internal {
+        require(rewards[id].finalized());
+        if(agree) {
+            _withdraw(id);
+        }
+        emit RewardPollFinished(id, agree);
     }
 
     /**
     * @dev Withdraw accumulated balance for a beneficiary.
-    * @param id The id of the reward.
     */
-    function _withdraw(uint256 id) internal {
-        uint256 amount = rewards[id].amount;
-        address beneficiary = rewards[id].beneficiary;
+    function _withdraw(uint256 id) internal onlyMember {
         uint256 tokenBalance = token.balanceOf(address(this));
 
-        require(address(this) != address(0));
-        require(withdrawalAllowed(id));
-        require(amount > 0);
-        require(tokenBalance >= amount);
+        require(rewards[id].withdrawalAllowed());
+        require(rewards[id].amount() > 0);
+        require(tokenBalance >= rewards[id].amount());
 
         // Approve the token transaction.
-        token.approve(address(this), amount);
+        token.approve(address(this), rewards[id].amount());
         // Transfer the tokens from the pool to the beneficiary.
-        token.transferFrom(address(this), beneficiary, amount);
+        token.transferFrom(address(this), rewards[id].beneficiary(), rewards[id].amount());
 
-        rewards[id].state = RewardState.Withdrawn;
+        emit Withdrawn(rewards[id].beneficiary(), rewards[id].amount(), id, now);
 
-        emit Withdrawn(beneficiary, amount, id, now);
-
-        beneficiaries[beneficiary].push(id);
+        delete rewards[id];
     }
+
 }
