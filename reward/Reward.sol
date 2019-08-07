@@ -35,8 +35,8 @@ contract Reward is MemberRole, BasePoll {
         uint256 _amount,
         address _tokenAddress,
         address _poolAddress
-    ) public
-        BasePoll(address(token), startTime, endTime, false)
+    ) public onlyMember
+        BasePoll(_tokenAddress, now, now + 7 days, false)
     {
         id = _id;
         slug = _slug;

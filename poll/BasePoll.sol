@@ -1,10 +1,9 @@
 pragma solidity ^0.5.0;
 
-import '../access/roles/MemberRole.sol';
 import '../math/SafeMath.sol';
 import '../token/ERC20/IERC20.sol';
 
-contract BasePoll is MemberRole {
+contract BasePoll {
     using SafeMath for uint256;
 
     struct Vote {
@@ -65,7 +64,7 @@ contract BasePoll is MemberRole {
      * @dev Process user`s vote
      * @param agree True if user endorses the proposal else False
      */
-    function vote(bool agree) public checkTime onlyMember{
+    function vote(bool agree) external checkTime {
         require(votesByAddress[msg.sender].time == 0);
 
         uint256 voiceWeight = token.balanceOf(msg.sender);
@@ -88,7 +87,7 @@ contract BasePoll is MemberRole {
     /**
      * @dev Revoke user`s vote
      */
-    function revokeVote() public checkTime {
+    function revokeVote() external checkTime {
         require(votesByAddress[msg.sender].time > 0);
 
         uint256 voiceWeight = votesByAddress[msg.sender].weight;

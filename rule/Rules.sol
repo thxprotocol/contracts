@@ -57,6 +57,25 @@ contract Rules is ManagerRole, MemberRole {
     }
 
     /**
+    * @dev Vote for the suggested rule.
+    * @param agree Approve or reject rule.
+    */
+    function voteForRule(bool agree) public onlyMember {
+        require(address(rulePoll) != address(0));
+
+        rulePoll.vote(agree);
+    }
+
+    /**
+    * @dev Vote for the suggested rule.
+    */
+    function revokeVoteForRule() public onlyMember {
+        require(address(rulePoll) != address(0));
+
+        rulePoll.revokeVote();
+    }
+
+    /**
     * @dev Starts the rule poll for chaning the amount.
     */
     function startRulePoll(uint256 id, uint256 proposedAmount) public onlyMember {

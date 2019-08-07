@@ -4,7 +4,7 @@ import './reward/Reward.sol';
 import './rule/Rules.sol';
 import './THXToken.sol';
 
-contract RewardPool is ManagerRole, Rules {
+contract RewardPool is Rules {
 
     event Deposited(address indexed sender, uint256 amount, uint256 created);
     event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
@@ -63,6 +63,23 @@ contract RewardPool is ManagerRole, Rules {
     function createReward(string memory slug, uint256 amount) public {
         Reward reward = new Reward(rewards.length, slug, msg.sender, amount, address(token), address(this));
         rewards.push(reward);
+    }
+
+    /**
+    * @dev Vote for the suggested reward.
+    * @param id Referenced Reward
+    * @param agree Approve or reject reward.
+    */
+    function voteForReward(uint256 id, bool agree) public onlyManager {
+        rewards[id].vote(agree);
+    }
+
+    /**
+    * @dev Vote for the suggested reward.
+    * @param id Reference to thte reward
+    */
+    function revokeVoteForReward(uint256 id) public onlyManager {
+        rewards[id].revokeVote();
     }
 
     /**
