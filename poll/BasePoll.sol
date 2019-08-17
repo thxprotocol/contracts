@@ -62,14 +62,16 @@ contract BasePoll {
 
     /**
      * @dev Process user`s vote
+     * @param voter The address of the user voting
      * @param agree True if user endorses the proposal else False
      */
-    function vote(bool agree) external checkTime {
-        require(votesByAddress[msg.sender].time == 0);
+    function vote(address voter, bool agree) external checkTime {
+        require(voter != address(0));
+        require(votesByAddress[voter].time == 0);
 
-        uint256 voiceWeight = token.balanceOf(msg.sender);
+        uint256 voiceWeight = token.balanceOf(voter);
         uint256 maxVoiceWeight = token.totalSupply().div(MAX_TOKENS_WEIGHT_DENOM);
-        voiceWeight =  voiceWeight <= maxVoiceWeight ? voiceWeight : maxVoiceWeight;
+        voiceWeight = voiceWeight <= maxVoiceWeight ? voiceWeight : maxVoiceWeight;
 
         if(agree) {
             yesCounter = yesCounter.add(voiceWeight);
@@ -77,25 +79,26 @@ contract BasePoll {
             noCounter = noCounter.add(voiceWeight);
         }
 
-        votesByAddress[msg.sender].time = now;
-        votesByAddress[msg.sender].weight = voiceWeight;
-        votesByAddress[msg.sender].agree = agree;
+        votesByAddress[voter].time = now;
+        votesByAddress[voter].weight = voiceWeight;
+        votesByAddress[voter].agree = agree;
 
         totalVoted = totalVoted.add(1);
     }
 
     /**
      * @dev Revoke user`s vote
+     * @param voter The address of the user voting
      */
-    function revokeVote() external checkTime {
-        require(votesByAddress[msg.sender].time > 0);
+    function revokeVote(address voter) external checkTime {
+        require(votesByAddress[voter].time > 0);
 
-        uint256 voiceWeight = votesByAddress[msg.sender].weight;
-        bool agree = votesByAddress[msg.sender].agree;
+        uint256 voiceWeight = votesByAddress[voter].weight;
+        bool agree = votesByAddress[voter].agree;
 
-        votesByAddress[msg.sender].time = 0;
-        votesByAddress[msg.sender].weight = 0;
-        votesByAddress[msg.sender].agree = false;
+        votesByAddress[voter].time = 0;
+        votesByAddress[voter].weight = 0;
+        votesByAddress[voter].agree = false;
 
         totalVoted = totalVoted.sub(1);
         if(agree) {

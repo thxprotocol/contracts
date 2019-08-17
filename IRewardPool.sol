@@ -7,7 +7,7 @@ pragma solidity ^0.5.0;
 interface IRewardPool {
     /**
      * @dev RulePoll callback
-     * @param id The referenced reward
+     * @param id The referenced rule
      * @param agree True if the rule should apply or change
      * @param proposedAmount The proposed reward size
      */

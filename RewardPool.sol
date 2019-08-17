@@ -9,6 +9,7 @@ contract RewardPool is Rules {
     event Deposited(address indexed sender, uint256 amount, uint256 created);
     event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
 
+    event RewardPollCreated();
     event RewardPollFinished(uint256 id, bool approved);
 
     THXToken public token;
@@ -17,7 +18,12 @@ contract RewardPool is Rules {
 
     Reward[] public rewards;
 
-    constructor(string memory _name, address _tokenAddress) public {
+    constructor(
+        string memory _name,
+        address _tokenAddress
+    ) public
+        Rules(_tokenAddress)
+    {
         name = _name;
         token = THXToken(_tokenAddress);
         creator = msg.sender;
@@ -57,12 +63,13 @@ contract RewardPool is Rules {
 
     /**
     * @dev Creates the suggested reward.
-    * @param slug Short readable description of reward.
-    * @param amount Reward size suggested for the beneficiary.
+    * @param id Reference to the rule
     */
-    function createReward(string memory slug, uint256 amount) public {
-        Reward reward = new Reward(rewards.length, slug, msg.sender, amount, address(token), address(this));
+    function createReward(uint256 id) public {
+        Reward reward = new Reward(rewards.length, rules[id].slug, msg.sender, rules[id].amount, address(token), address(this));
         rewards.push(reward);
+
+        emit RewardPollCreated();
     }
 
     /**
@@ -71,7 +78,7 @@ contract RewardPool is Rules {
     * @param agree Approve or reject reward.
     */
     function voteForReward(uint256 id, bool agree) public onlyManager {
-        rewards[id].vote(agree);
+        rewards[id].vote(msg.sender, agree);
     }
 
     /**
@@ -79,15 +86,16 @@ contract RewardPool is Rules {
     * @param id Reference to thte reward
     */
     function revokeVoteForReward(uint256 id) public onlyManager {
-        rewards[id].revokeVote();
+        rewards[id].revokeVote(msg.sender);
     }
 
     /**
     * @dev Called when poll is finished
     * @param agree Bool for checking the result of the poll.
     */
-    function onRewardPollFinish(uint256 id, bool agree) internal {
+    function onRewardPollFinish(uint256 id, bool agree) external {
         require(rewards[id].finalized());
+
         if(agree) {
             _withdraw(id);
         }
@@ -97,10 +105,10 @@ contract RewardPool is Rules {
     /**
     * @dev Withdraw accumulated balance for a beneficiary.
     */
-    function _withdraw(uint256 id) internal onlyMember {
+    function _withdraw(uint256 id) internal {
         uint256 tokenBalance = token.balanceOf(address(this));
 
-        require(rewards[id].withdrawalAllowed());
+        /* require(rewards[id].withdrawalAllowed()); */
         require(rewards[id].amount() > 0);
         require(tokenBalance >= rewards[id].amount());
 

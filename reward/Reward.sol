@@ -11,7 +11,6 @@ contract Reward is MemberRole, BasePoll {
 
     enum RewardState { Pending, Approved, Rejected, Withdrawn }
 
-    event RewardPollCreated();
     event RewardStateChanged(uint256 id, RewardState state);
 
     uint256 public constant REWARD_POLL_DURATION = 7 days;
@@ -53,9 +52,9 @@ contract Reward is MemberRole, BasePoll {
     /**
     * @dev Check if the reward is approved.
     */
-    function withdrawalAllowed() public view returns (bool) {
+    /* function withdrawalAllowed() public view returns (bool) {
         return state == RewardState.Approved;
-    }
+    } */
 
     /**
     * @dev callback called after poll finalization

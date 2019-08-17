@@ -35,6 +35,10 @@ contract Rules is ManagerRole, MemberRole {
 
     Rule[] public rules;
 
+    constructor(address _tokenAddress) public {
+        token = IERC20(_tokenAddress);
+    }
+
     /**
     * @dev Creates the initial reward rule.
     * @param slug Short readable description of rule.
@@ -63,7 +67,7 @@ contract Rules is ManagerRole, MemberRole {
     function voteForRule(bool agree) public onlyMember {
         require(address(rulePoll) != address(0));
 
-        rulePoll.vote(agree);
+        rulePoll.vote(msg.sender, agree);
     }
 
     /**
@@ -72,7 +76,7 @@ contract Rules is ManagerRole, MemberRole {
     function revokeVoteForRule() public onlyMember {
         require(address(rulePoll) != address(0));
 
-        rulePoll.revokeVote();
+        rulePoll.revokeVote(msg.sender);
     }
 
     /**
@@ -129,7 +133,7 @@ contract Rules is ManagerRole, MemberRole {
     * @param agree Bool for checking the result of the poll.
     * @param proposedAmount The proposed reward size.
     */
-    function onRulePollFinish(uint256 id, bool agree, uint256 proposedAmount) internal {
+    function onRulePollFinish(uint256 id, bool agree, uint256 proposedAmount) external {
         require(msg.sender == address(rulePoll) && rulePoll.finalized());
 
         if(agree) {
