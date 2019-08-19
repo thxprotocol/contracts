@@ -4,12 +4,11 @@ import '../access/roles/MemberRole.sol';
 import '../math/SafeMath.sol';
 import '../token/ERC20/IERC20.sol';
 import '../poll/BasePoll.sol';
-import '../IRewardPool.sol';
 
-contract Reward is MemberRole, BasePoll {
+contract Reward is BasePoll, MemberRole {
     using SafeMath for uint256;
 
-    enum RewardState { Pending, Approved, Rejected, Withdrawn }
+    enum RewardState { Pending, Approved, Rejected }
 
     event RewardStateChanged(uint256 id, RewardState state);
 
@@ -22,9 +21,6 @@ contract Reward is MemberRole, BasePoll {
     RewardState public state;
     uint256 public created;
 
-    IERC20 public token;
-    IRewardPool public pool;
-
     mapping (address => uint256[]) public voters;
 
     constructor(
@@ -35,7 +31,7 @@ contract Reward is MemberRole, BasePoll {
         address _tokenAddress,
         address _poolAddress
     ) public onlyMember
-        BasePoll(_tokenAddress, now, now + 7 days, false)
+        BasePoll(_tokenAddress, _poolAddress, now, now + REWARD_POLL_DURATION, false)
     {
         id = _id;
         slug = _slug;
@@ -43,8 +39,6 @@ contract Reward is MemberRole, BasePoll {
         amount = _amount;
         state = RewardState.Pending;
         created = now;
-        token = IERC20(_tokenAddress);
-        pool = IRewardPool(_poolAddress);
 
         emit RewardStateChanged(id, state);
     }
@@ -52,15 +46,52 @@ contract Reward is MemberRole, BasePoll {
     /**
     * @dev Check if the reward is approved.
     */
-    /* function withdrawalAllowed() public view returns (bool) {
+    function withdrawalAllowed() public view returns (bool) {
         return state == RewardState.Approved;
-    } */
+    }
+
+    /**
+    * @dev Withdraw accumulated balance for a beneficiary.
+    */
+    function withdraw() public {
+        uint256 poolBalance = token.balanceOf(address(pool));
+
+        require(withdrawalAllowed());
+        require(msg.sender == beneficiary);
+        require(amount > 0);
+        require(poolBalance >= amount);
+
+        pool.onWithdrawel(beneficiary, amount, id, created);
+    }
 
     /**
     * @dev callback called after poll finalization
     */
     function onPollFinish(bool agree) internal {
+        if (agree && finalized) {
+            _onApproval();
+        }
+        else {
+            _onRejection();
+        }
+
         pool.onRewardPollFinish(id, agree);
+    }
+
+    /**
+    * @dev callback called after reward is withdrawn
+    */
+    function _onApproval() internal {
+        state = RewardState.Approved;
+        emit RewardStateChanged(id, state);
+    }
+
+    /**
+    * @dev callback called after reward is rejected
+    */
+    function _onRejection() internal {
+        state = RewardState.Rejected;
+        emit RewardStateChanged(id, state);
     }
 
 }

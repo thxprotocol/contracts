@@ -94,32 +94,16 @@ contract RewardPool is Rules {
     * @param agree Bool for checking the result of the poll.
     */
     function onRewardPollFinish(uint256 id, bool agree) external {
-        require(rewards[id].finalized());
-
-        if(agree) {
-            _withdraw(id);
-        }
         emit RewardPollFinished(id, agree);
     }
 
     /**
-    * @dev Withdraw accumulated balance for a beneficiary.
+    * @dev callback called after reward is withdrawn
     */
-    function _withdraw(uint256 id) internal {
-        uint256 tokenBalance = token.balanceOf(address(this));
+    function onWithdrawel(address beneficiary, uint256 amount, uint256 id, uint256 created) external {
+        token.transfer(beneficiary, amount);
 
-        /* require(rewards[id].withdrawalAllowed()); */
-        require(rewards[id].amount() > 0);
-        require(tokenBalance >= rewards[id].amount());
-
-        // Approve the token transaction.
-        token.approve(address(this), rewards[id].amount());
-        // Transfer the tokens from the pool to the beneficiary.
-        token.transferFrom(address(this), rewards[id].beneficiary(), rewards[id].amount());
-
-        emit Withdrawn(rewards[id].beneficiary(), rewards[id].amount(), id, now);
-
-        delete rewards[id];
+        emit Withdrawn(beneficiary, amount, id, created);
     }
 
 }

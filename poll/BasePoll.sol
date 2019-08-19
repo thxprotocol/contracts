@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import '../math/SafeMath.sol';
 import '../token/ERC20/IERC20.sol';
+import '../IRewardPool.sol';
 
 contract BasePoll {
     using SafeMath for uint256;
@@ -15,6 +16,7 @@ contract BasePoll {
     uint256 public constant MAX_TOKENS_WEIGHT_DENOM = 1000;
 
     IERC20 public token;
+    IRewardPool public pool;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -46,6 +48,7 @@ contract BasePoll {
      */
     constructor(
         address _tokenAddress,
+        address _poolAddress,
         uint256 _startTime,
         uint256 _endTime,
         bool _checkTransfersAfterEnd
@@ -54,6 +57,8 @@ contract BasePoll {
         require(_startTime >= now && _endTime > _startTime);
 
         token = IERC20(_tokenAddress);
+        pool = IRewardPool(_poolAddress);
+
         startTime = _startTime;
         endTime = _endTime;
         finalized = false;

@@ -20,6 +20,7 @@ contract RulePoll is BasePoll {
      * @param _startTime Poll start time
      * @param _endTime Poll end time
      * @param _minTokensPerc Minimum token percentage for this vote
+     * @param _poolAddress Reward Pool contract address
      */
     constructor(
         uint256 _id,
@@ -30,7 +31,7 @@ contract RulePoll is BasePoll {
         uint256 _minTokensPerc,
         address _poolAddress
     ) public
-        BasePoll(_tokenAddress, _startTime, _endTime, false)
+        BasePoll(_tokenAddress, _poolAddress, _startTime, _endTime, false)
     {
         id = _id;
         minTokensPerc = _minTokensPerc;
