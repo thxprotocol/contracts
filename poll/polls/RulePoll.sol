@@ -15,7 +15,7 @@ contract RulePoll is BasePoll {
 
     /**
      * @dev RulePoll constructor
-     * @param _id Id of the referenced Reward
+     * @param _id Id of the referenced Rule
      * @param _tokenAddress ERC20 compatible token contract address
      * @param _startTime Poll start time
      * @param _endTime Poll end time

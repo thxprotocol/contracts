@@ -14,6 +14,7 @@ contract Rules is ManagerRole, MemberRole {
         string slug;
         uint256 amount;
         RuleState state;
+        RulePoll poll;
         address creator;
         uint256 created;
     }
@@ -24,13 +25,12 @@ contract Rules is ManagerRole, MemberRole {
     event RulePollFinished(uint256 id, bool approved);
     event RuleStateChanged(uint256 id, RuleState state);
 
-    mapping (address => uint256[]) public voters;
+    event Log(RulePoll pollAddress);
 
     uint256 public constant RULE_POLL_DURATION = 7 days;
     uint256 public constant MAX_VOTED_TOKEN_PERC = 10;
 
     IERC20 public token;
-    RulePoll public rulePoll;
     uint256 public minVotedTokensPerc = 0;
 
     Rule[] public rules;
@@ -56,39 +56,41 @@ contract Rules is ManagerRole, MemberRole {
 
         emit RuleStateChanged(rule.id, rule.state);
         rules.push(rule);
-
-        startRulePoll(rule.id, rule.amount);
     }
 
     /**
     * @dev Vote for the suggested rule.
+    * @param id reference to the rule that the poll runs for
     * @param agree Approve or reject rule.
     */
-    function voteForRule(bool agree) public onlyMember {
-        require(address(rulePoll) != address(0));
+    function voteForRule(uint256 id, bool agree) public onlyMember {
+        require(address(rules[id].poll) != address(0));
 
-        rulePoll.vote(msg.sender, agree);
+        rules[id].poll.vote(msg.sender, agree);
     }
 
     /**
     * @dev Vote for the suggested rule.
+    * @param id reference to the rule that the poll runs for
     */
-    function revokeVoteForRule() public onlyMember {
-        require(address(rulePoll) != address(0));
+    function revokeVoteForRule(uint256 id) public onlyMember {
+        /* require(address(rules[id].poll) != address(0)); */
 
-        rulePoll.revokeVote(msg.sender);
+        emit Log(rules[id].poll);
+
+        rules[id].poll.revokeVote(msg.sender);
     }
 
     /**
     * @dev Starts the rule poll for chaning the amount.
     */
     function startRulePoll(uint256 id, uint256 proposedAmount) public onlyMember {
-        require(address(rulePoll) == address(0) || rulePoll.finalized());
+        require(address(rules[id].poll) == address(0) || rules[id].poll.finalized());
 
         uint256 startTime = now;
         uint256 endTime = startTime + RULE_POLL_DURATION;
 
-        rulePoll = new RulePoll(id, proposedAmount, address(token), startTime, endTime, minVotedTokensPerc, address(this));
+        rules[id].poll = new RulePoll(id, proposedAmount, address(token), startTime, endTime, minVotedTokensPerc, address(this));
 
         emit RulePollCreated(id, proposedAmount);
     }
@@ -134,7 +136,7 @@ contract Rules is ManagerRole, MemberRole {
     * @param proposedAmount The proposed reward size.
     */
     function onRulePollFinish(uint256 id, bool agree, uint256 proposedAmount) external {
-        require(msg.sender == address(rulePoll) && rulePoll.finalized());
+        require(msg.sender == address(rules[id].poll) && rules[id].poll.finalized());
 
         if(agree) {
             _approve(id, proposedAmount);
@@ -143,10 +145,10 @@ contract Rules is ManagerRole, MemberRole {
             _reject(id);
         } */
 
-        updateMinVotedTokens(rulePoll.getVotedTokensPerc());
+        updateMinVotedTokens(rules[id].poll.getVotedTokensPerc());
         emit RulePollFinished(id, agree);
 
-        delete rulePoll;
+        delete rules[id].poll;
     }
 
     /**
