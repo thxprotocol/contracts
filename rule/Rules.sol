@@ -25,9 +25,7 @@ contract Rules is ManagerRole, MemberRole {
     event RulePollFinished(uint256 id, bool approved);
     event RuleStateChanged(uint256 id, RuleState state);
 
-    event Log(RulePoll pollAddress);
-
-    uint256 public constant RULE_POLL_DURATION = 7 days;
+    uint256 public constant RULE_POLL_DURATION = 1 minutes;
     uint256 public constant MAX_VOTED_TOKEN_PERC = 10;
 
     IERC20 public token;
@@ -56,6 +54,8 @@ contract Rules is ManagerRole, MemberRole {
 
         emit RuleStateChanged(rule.id, rule.state);
         rules.push(rule);
+
+        startRulePoll(rule.id, rule.amount);
     }
 
     /**
@@ -74,9 +74,7 @@ contract Rules is ManagerRole, MemberRole {
     * @param id reference to the rule that the poll runs for
     */
     function revokeVoteForRule(uint256 id) public onlyMember {
-        /* require(address(rules[id].poll) != address(0)); */
-
-        emit Log(rules[id].poll);
+        require(address(rules[id].poll) != address(0));
 
         rules[id].poll.revokeVote(msg.sender);
     }
@@ -86,6 +84,8 @@ contract Rules is ManagerRole, MemberRole {
     */
     function startRulePoll(uint256 id, uint256 proposedAmount) public onlyMember {
         require(address(rules[id].poll) == address(0) || rules[id].poll.finalized());
+
+        rules[id].state = RuleState.Pending;
 
         uint256 startTime = now;
         uint256 endTime = startTime + RULE_POLL_DURATION;
