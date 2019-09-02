@@ -19,7 +19,7 @@ contract Rules is ManagerRole, MemberRole {
         uint256 created;
     }
 
-    enum RuleState { Pending, Approved, Rejected }
+    enum RuleState { Pending, Active, Disabled }
 
     event RulePollCreated(uint256 id, uint256 proposedAmount);
     event RulePollFinished(uint256 id, bool approved);
@@ -81,11 +81,12 @@ contract Rules is ManagerRole, MemberRole {
 
     /**
     * @dev Starts the rule poll for chaning the amount.
+    * @param id The id of the rule.
+    * @param id The new amount for the rule.
     */
     function startRulePoll(uint256 id, uint256 proposedAmount) public onlyMember {
         require(address(rules[id].poll) == address(0) || rules[id].poll.finalized());
-
-        rules[id].state = RuleState.Pending;
+        require(proposedAmount != rules[id].amount);
 
         uint256 startTime = now;
         uint256 endTime = startTime + RULE_POLL_DURATION;
@@ -98,11 +99,18 @@ contract Rules is ManagerRole, MemberRole {
     /**
     * @dev Approves the suggested rule and sets its state to Active.
     * @param id The id of the rule.
+    * @param id The new amount for the rule.
     */
     function _approve(uint256 id, uint256 proposedAmount) internal {
-        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Rejected);
+        if (proposedAmount == 0) {
+            rules[id].state = RuleState.Disabled;
+        }
+
+        if (proposedAmount != 0 && rules[id].state == RuleState.Pending) {
+            rules[id].state = RuleState.Active;
+        }
+
         rules[id].amount = proposedAmount;
-        rules[id].state = RuleState.Approved;
 
         emit RuleStateChanged(rules[id].id, rules[id].state);
     }
@@ -112,8 +120,8 @@ contract Rules is ManagerRole, MemberRole {
     * @param id The id of the rule.
     */
     /* function _reject(uint256 id) internal {
-        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Approved);
-        rules[id].state = RuleState.Rejected;
+        require(rules[id].state == RuleState.Pending || rules[id].state == RuleState.Active);
+        rules[id].state = RuleState.Disabled;
     } */
 
     /**
@@ -141,9 +149,6 @@ contract Rules is ManagerRole, MemberRole {
         if(agree) {
             _approve(id, proposedAmount);
         }
-        /* else {
-            _reject(id);
-        } */
 
         updateMinVotedTokens(rules[id].poll.getVotedTokensPerc());
         emit RulePollFinished(id, agree);
