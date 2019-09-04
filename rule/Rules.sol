@@ -19,7 +19,7 @@ contract Rules is ManagerRole, MemberRole {
         uint256 created;
     }
 
-    enum RuleState { Pending, Active, Disabled }
+    enum RuleState { Active, Disabled }
 
     event RulePollCreated(uint256 id, uint256 proposedAmount);
     event RulePollFinished(uint256 id, bool approved);
@@ -40,22 +40,19 @@ contract Rules is ManagerRole, MemberRole {
     /**
     * @dev Creates the initial reward rule.
     * @param slug Short readable description of rule.
-    * @param amount Reward size suggested for the beneficiary.
     */
-    function createRule(string memory slug, uint256 amount) public onlyManager {
+    function createRule(string memory slug) public onlyManager {
         Rule memory rule;
 
         rule.id = rules.length;
         rule.slug = slug;
-        rule.amount = amount;
-        rule.state = RuleState.Pending;
+        rule.amount = 0;
+        rule.state = RuleState.Disabled;
         rule.creator = msg.sender;
         rule.created = now;
 
         emit RuleStateChanged(rule.id, rule.state);
         rules.push(rule);
-
-        startRulePoll(rule.id, rule.amount);
     }
 
     /**
@@ -106,7 +103,7 @@ contract Rules is ManagerRole, MemberRole {
             rules[id].state = RuleState.Disabled;
         }
 
-        if (proposedAmount != 0 && rules[id].state == RuleState.Pending) {
+        if (proposedAmount != 0 && rules[id].state == RuleState.Disabled) {
             rules[id].state = RuleState.Active;
         }
 

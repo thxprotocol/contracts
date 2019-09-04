@@ -12,7 +12,7 @@ contract Reward is BasePoll, MemberRole {
 
     event RewardStateChanged(uint256 id, RewardState state);
 
-    uint256 public constant REWARD_POLL_DURATION = 7 days;
+    uint256 public constant REWARD_POLL_DURATION = 1 minutes;
 
     uint256 public id;
     string public slug;
