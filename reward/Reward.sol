@@ -8,7 +8,7 @@ import '../poll/BasePoll.sol';
 contract Reward is BasePoll, MemberRole {
     using SafeMath for uint256;
 
-    enum RewardState { Pending, Approved, Rejected }
+    enum RewardState { Pending, Approved, Rejected, Withdrawn }
 
     event RewardStateChanged(uint256 id, RewardState state);
 
@@ -62,6 +62,8 @@ contract Reward is BasePoll, MemberRole {
         require(poolBalance >= amount);
 
         pool.onWithdrawel(beneficiary, amount, id, created);
+
+        state = RewardState.Withdrawn;
     }
 
     /**
