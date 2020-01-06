@@ -61,7 +61,7 @@ contract Reward is BasePoll, MemberRole {
         require(amount > 0);
         require(poolBalance >= amount);
 
-        pool.onWithdrawel(beneficiary, amount, id, created);
+        pool.onWithdrawel(beneficiary, amount, created);
 
         state = RewardState.Withdrawn;
     }

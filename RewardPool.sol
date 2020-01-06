@@ -7,7 +7,7 @@ import './THXToken.sol';
 contract RewardPool is Rules {
 
     event Deposited(address indexed sender, uint256 amount, uint256 created);
-    event Withdrawn(address indexed beneficiary, uint256 amount, uint256 id, uint256 created);
+    event Withdrawn(address indexed receiver, uint256 amount, uint256 created);
 
     event RewardPollCreated();
     event RewardPollFinished(uint256 id, bool approved);
@@ -17,6 +17,21 @@ contract RewardPool is Rules {
     address public creator;
 
     Reward[] public rewards;
+
+    struct Deposit {
+        uint256 amount;
+        address sender;
+        uint256 created;
+    }
+
+    struct Withdrawel {
+        uint256 amount;
+        address receiver;
+        uint256 created;
+    }
+
+    mapping (address => Deposit[]) public deposits;
+    mapping (address => Withdrawel[]) public withdrawels;
 
     constructor(
         string memory _name,
@@ -51,14 +66,35 @@ contract RewardPool is Rules {
         // Transfer the tokens from the sender to the pool
         token.transferDeposit(msg.sender, address(this), amount);
 
-        emit Deposited(msg.sender, amount, now);
+        Deposit memory d;
+        d.amount = amount;
+        d.sender = msg.sender;
+        d.created = now;
+
+        deposits[msg.sender].push(d);
+
+        emit Deposited(d.sender, d.amount, now);
     }
 
     /**
-    * @dev Counts the amount of rewards.
+    * @dev Counts the amount of Rewards.
     */
     function countRewards() public view returns (uint256) {
         return rewards.length;
+    }
+
+    /**
+    * @dev Counts the amount of Deposits for an address.
+    */
+    function countDeposits(address sender) public view returns (uint256) {
+        return deposits[sender].length;
+    }
+
+    /**
+    * @dev Counts the amount of Withdrawels for an address.
+    */
+    function countWithdrawels(address receiver) public view returns (uint256) {
+        return withdrawels[receiver].length;
     }
 
     /**
@@ -100,10 +136,17 @@ contract RewardPool is Rules {
     /**
     * @dev callback called after reward is withdrawn
     */
-    function onWithdrawel(address beneficiary, uint256 amount, uint256 id, uint256 created) external {
-        token.transfer(beneficiary, amount);
+    function onWithdrawel(address receiver, uint256 amount, uint256 created) external {
+        token.transfer(receiver, amount);
 
-        emit Withdrawn(beneficiary, amount, id, created);
+        Withdrawel memory w;
+        w.amount = amount;
+        w.receiver = receiver;
+        w.created = created;
+
+        withdrawels[receiver].push(w);
+
+        emit Withdrawn(w.receiver, w.amount, w.created);
     }
 
 }

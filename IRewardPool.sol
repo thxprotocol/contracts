@@ -24,8 +24,7 @@ interface IRewardPool {
      * @dev Withdrawel callback
      * @param beneficiary The addres of the account receiving the reward
      * @param amount The amount the beneficiary will receive
-     * @param id The id of the reward that is processed
      * @param created The timestamp of the moment the reward was claimed
      */
-    function onWithdrawel(address beneficiary, uint256 amount, uint256 id, uint256 created) external;
+    function onWithdrawel(address beneficiary, uint256 amount, uint256 created) external;
 }
