@@ -6,11 +6,11 @@ import './THXToken.sol';
 
 contract RewardPool is Rules {
 
-    event Deposited(address indexed sender, uint256 amount, uint256 created);
-    event Withdrawn(address indexed receiver, uint256 amount, uint256 created);
+    event Deposited(address indexed sender, uint256 amount);
+    event Withdrawn(address indexed beneficiary, uint256 reward);
 
-    event RewardPollCreated();
-    event RewardPollFinished(uint256 id, bool approved);
+    event RewardPollCreated(uint256 reward);
+    event RewardPollFinished(uint256 reward, bool approved);
 
     THXToken public token;
     string public name;
@@ -73,7 +73,7 @@ contract RewardPool is Rules {
 
         deposits[msg.sender].push(d);
 
-        emit Deposited(d.sender, d.amount, now);
+        emit Deposited(d.sender, d.amount);
     }
 
     /**
@@ -99,13 +99,14 @@ contract RewardPool is Rules {
 
     /**
     * @dev Creates the suggested reward.
-    * @param id Reference to the rule
+    * @param rule Reference id of the rule
     */
-    function createReward(uint256 id) public {
-        Reward reward = new Reward(rewards.length, rules[id].slug, msg.sender, rules[id].amount, address(token), address(this));
-        rewards.push(reward);
+    function createReward(uint256 rule) public {
+        Reward reward = new Reward(rewards.length, rule, msg.sender, rules[rule].amount, address(token), address(this));
 
-        emit RewardPollCreated();
+        emit RewardPollCreated(rewards.length);
+
+        rewards.push(reward);
     }
 
     /**
@@ -127,6 +128,7 @@ contract RewardPool is Rules {
 
     /**
     * @dev Called when poll is finished
+    * @param id Reference to the reward rule
     * @param agree Bool for checking the result of the poll.
     */
     function onRewardPollFinish(uint256 id, bool agree) external {
@@ -146,7 +148,7 @@ contract RewardPool is Rules {
 
         withdrawels[receiver].push(w);
 
-        emit Withdrawn(w.receiver, w.amount, w.created);
+        emit Withdrawn(w.receiver, w.amount);
     }
 
 }

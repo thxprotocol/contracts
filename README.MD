@@ -59,9 +59,9 @@ uint256 id // Might be removed
 This is the uniquer identifier of the reward. It can be referenced by other smart contracts.
 
 ```
-string slug // Might be removed
+uint256 rule
 ```
-The slug is used as a readable string describing the reward rule.
+The rule is used as a readable string describing the reward rule.
 
 ```
 address beneficiary
@@ -69,7 +69,7 @@ address beneficiary
 The beneficiary is the receiver of the reward amount.
 
 ```
-uint254 amount
+uint256 amount
 ```
 The amount equals the amount the beneficiary can withdraw after approval of the reward.
 
@@ -84,7 +84,7 @@ The reward state (Pending, Approved, Rejected, Withdrawn) changes while the rewa
 * Withdrawn: The reward is withdrawn by the beneficiary
 
 ```
-uint254 created
+uint256 created
 ```
 The timestamp of the mined block that included the transaction the created the the reward.
 
@@ -97,8 +97,8 @@ This list contains the reward per address. It is used to retrieve information ab
 ```
 deposits[address => Deposit] = Deposit(
     address sender,
-    uint254 amount,
-    uint254 created
+    uint256 amount,
+    uint256 created
     )
 ```
 This list contains the deposits per address. It is used to retrieve historical data about incoming token transfers for the reward pool in faster way than crawling back in time through all blocks and look for events.
@@ -106,8 +106,8 @@ This list contains the deposits per address. It is used to retrieve historical d
 ```
 withdrawels[address => Withdrawel] = Withdrawel(
     address receiver,
-    uint254 amount,
-    uint254 created
+    uint256 amount,
+    uint256 created
     )
 ```
 This list contains the withdrawels per address. It is used to retrieve historical data about outgoing token transfers for the reward pool in faster way than crawling back in time through all blocks and look for events.
@@ -134,11 +134,11 @@ Emits when the state of Reward changes. Used to notify managers to verify the re
 ```
 RewardPollCreated
 ```
-Emits when a Reward is created. Used to notify managers to verify the reward.
+Emits when a Reward is claimed. Used to notify managers to start verifying the reward.
 ```
 RewardPollFinished // Might be removed
 ```
-...
+Emits when a Reward Poll is finished. Used to notify the owner to withdraw the reward.
 ```
 ManagerAdded
 ```

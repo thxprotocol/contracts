@@ -15,7 +15,7 @@ contract Reward is BasePoll, MemberRole {
     uint256 public constant REWARD_POLL_DURATION = 1 minutes;
 
     uint256 public id;
-    string public slug;
+    uint256 public rule;
     address public beneficiary;
     uint256 public amount;
     RewardState public state;
@@ -25,7 +25,7 @@ contract Reward is BasePoll, MemberRole {
 
     constructor(
         uint256 _id,
-        string memory _slug,
+        uint256 _rule,
         address _beneficiary,
         uint256 _amount,
         address _tokenAddress,
@@ -34,7 +34,7 @@ contract Reward is BasePoll, MemberRole {
         BasePoll(_tokenAddress, _poolAddress, now, now + REWARD_POLL_DURATION, false)
     {
         id = _id;
-        slug = _slug;
+        rule = _rule;
         beneficiary = _beneficiary;
         amount = _amount;
         state = RewardState.Pending;

@@ -11,7 +11,6 @@ contract Rules is ManagerRole, MemberRole {
 
     struct Rule {
         uint256 id;
-        string slug;
         uint256 amount;
         RuleState state;
         RulePoll poll;
@@ -39,19 +38,18 @@ contract Rules is ManagerRole, MemberRole {
 
     /**
     * @dev Creates the initial reward rule.
-    * @param slug Short readable description of rule.
     */
-    function createRule(string memory slug) public onlyManager {
+    function createRule() public onlyManager {
         Rule memory rule;
 
         rule.id = rules.length;
-        rule.slug = slug;
         rule.amount = 0;
         rule.state = RuleState.Disabled;
         rule.creator = msg.sender;
         rule.created = now;
 
         emit RuleStateChanged(rule.id, rule.state);
+
         rules.push(rule);
     }
 
