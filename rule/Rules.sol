@@ -20,9 +20,9 @@ contract Rules is ManagerRole, MemberRole {
 
     enum RuleState { Active, Disabled }
 
-    event RulePollCreated(uint256 id, uint256 proposedAmount);
-    event RulePollFinished(uint256 id, bool approved);
-    event RuleStateChanged(uint256 id, RuleState state);
+    event RulePollCreated(uint256 id, uint256 proposedAmount, address sender);
+    event RulePollFinished(uint256 id, bool approved, address sender);
+    event RuleStateChanged(uint256 id, RuleState state, address sender);
 
     uint256 public constant RULE_POLL_DURATION = 1 minutes;
     uint256 public constant MAX_VOTED_TOKEN_PERC = 10;
@@ -48,7 +48,7 @@ contract Rules is ManagerRole, MemberRole {
         rule.creator = msg.sender;
         rule.created = now;
 
-        emit RuleStateChanged(rule.id, rule.state);
+        emit RuleStateChanged(rule.id, rule.state, msg.sender);
 
         rules.push(rule);
     }
@@ -88,7 +88,7 @@ contract Rules is ManagerRole, MemberRole {
 
         rules[id].poll = new RulePoll(id, proposedAmount, address(token), startTime, endTime, minVotedTokensPerc, address(this));
 
-        emit RulePollCreated(id, proposedAmount);
+        emit RulePollCreated(id, proposedAmount, msg.sender);
     }
 
     /**
@@ -107,7 +107,7 @@ contract Rules is ManagerRole, MemberRole {
 
         rules[id].amount = proposedAmount;
 
-        emit RuleStateChanged(rules[id].id, rules[id].state);
+        emit RuleStateChanged(rules[id].id, rules[id].state, msg.sender);
     }
 
     /**
@@ -146,7 +146,7 @@ contract Rules is ManagerRole, MemberRole {
         }
 
         updateMinVotedTokens(rules[id].poll.getVotedTokensPerc());
-        emit RulePollFinished(id, agree);
+        emit RulePollFinished(id, agree, msg.sender);
 
         delete rules[id].poll;
     }
