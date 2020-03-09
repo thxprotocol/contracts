@@ -106,7 +106,7 @@ contract RewardPool is Rules {
         Reward reward = new Reward(rewards.length, rule, msg.sender, rules[rule].amount, address(token), address(this));
 
         rewards.push(reward);
-        rewardsOf[msg.sender].push(reward);
+        rewardsOf[reward.beneficiary].push(reward);
 
         emit RewardPollCreated(rewards.length);
     }
