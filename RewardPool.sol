@@ -32,6 +32,7 @@ contract RewardPool is Rules {
 
     mapping (address => Deposit[]) public deposits;
     mapping (address => Withdrawel[]) public withdrawels;
+    mapping (address => Reward[]) public rewardsOf;
 
     constructor(
         string memory _name,
@@ -104,9 +105,10 @@ contract RewardPool is Rules {
     function createReward(uint256 rule) public {
         Reward reward = new Reward(rewards.length, rule, msg.sender, rules[rule].amount, address(token), address(this));
 
-        emit RewardPollCreated(rewards.length);
-
         rewards.push(reward);
+        rewardsOf[msg.sender].push(reward);
+
+        emit RewardPollCreated(rewards.length);
     }
 
     /**
