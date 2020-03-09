@@ -8,7 +8,7 @@ contract MemberRole {
     event MemberAdded(address indexed account);
     event MemberRemoved(address indexed account);
 
-    Roles.Role private _members;
+    Roles.Role public members;
 
     constructor () internal {
         _addMember(msg.sender);
@@ -20,7 +20,7 @@ contract MemberRole {
     }
 
     function isMember(address account) public view returns (bool) {
-        return _members.has(account);
+        return members.has(account);
     }
 
     function addMember(address account) public onlyMember {
@@ -32,12 +32,12 @@ contract MemberRole {
     }
 
     function _addMember(address account) internal {
-        _members.add(account);
+        members.add(account);
         emit MemberAdded(account);
     }
 
     function _removeMember(address account) internal {
-        _members.remove(account);
+        members.remove(account);
         emit MemberRemoved(account);
     }
 }
