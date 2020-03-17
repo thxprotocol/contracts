@@ -9,8 +9,8 @@ contract RewardPool is Rules {
     event Deposited(address indexed sender, uint256 amount);
     event Withdrawn(address indexed beneficiary, uint256 reward);
 
-    event RewardPollCreated(uint256 reward);
-    event RewardPollFinished(uint256 reward, bool approved);
+    event RewardPollCreated(uint256 id, address reward);
+    event RewardPollFinished(uint256 id, address reward, bool approved);
 
     THXToken public token;
     string public name;
@@ -85,6 +85,13 @@ contract RewardPool is Rules {
     }
 
     /**
+    * @dev Counts the amount of Rewards.
+    */
+    function countRewardsOf(address beneficiary) public view returns (uint256) {
+        return rewardsOf[beneficiary].length;
+    }
+
+    /**
     * @dev Counts the amount of Deposits for an address.
     */
     function countDeposits(address sender) public view returns (uint256) {
@@ -105,10 +112,10 @@ contract RewardPool is Rules {
     function createReward(uint256 rule) public {
         Reward reward = new Reward(rewards.length, rule, msg.sender, rules[rule].amount, address(token), address(this));
 
-        rewards.push(reward);
-        rewardsOf[reward.beneficiary].push(reward);
+        emit RewardPollCreated(rewards.length, address(reward));
 
-        emit RewardPollCreated(rewards.length);
+        rewards.push(reward);
+        rewardsOf[msg.sender].push(reward);
     }
 
     /**
@@ -134,7 +141,7 @@ contract RewardPool is Rules {
     * @param agree Bool for checking the result of the poll.
     */
     function onRewardPollFinish(uint256 id, bool agree) external {
-        emit RewardPollFinished(id, agree);
+        emit RewardPollFinished(id, address(rewards[id]), agree);
     }
 
     /**

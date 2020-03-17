@@ -8,7 +8,8 @@ contract ManagerRole {
     event ManagerAdded(address indexed account);
     event ManagerRemoved(address indexed account);
 
-    Roles.Role public managers;
+    Roles.Role private _managers;
+    address[] public managers;
 
     constructor () internal {
         _addManager(msg.sender);
@@ -20,7 +21,7 @@ contract ManagerRole {
     }
 
     function isManager(address account) public view returns (bool) {
-        return managers.has(account);
+        return _managers.has(account);
     }
 
     function addManager(address account) public onlyManager {
@@ -32,12 +33,13 @@ contract ManagerRole {
     }
 
     function _addManager(address account) internal {
-        managers.add(account);
+        _managers.add(account);
+        managers.push(account);
         emit ManagerAdded(account);
     }
 
     function _removeManager(address account) internal {
-        managers.remove(account);
+        _managers.remove(account);
         emit ManagerRemoved(account);
     }
 }
