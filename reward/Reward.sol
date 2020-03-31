@@ -17,6 +17,7 @@ contract Reward is BasePoll, MemberRole {
     uint256 public id;
     uint256 public rule;
     address public beneficiary;
+    address public benefactor;
     uint256 public amount;
     RewardState public state;
     uint256 public created;
@@ -27,6 +28,7 @@ contract Reward is BasePoll, MemberRole {
         uint256 _id,
         uint256 _rule,
         address _beneficiary,
+        address _benefactor,
         uint256 _amount,
         address _tokenAddress,
         address _poolAddress
@@ -36,6 +38,7 @@ contract Reward is BasePoll, MemberRole {
         id = _id;
         rule = _rule;
         beneficiary = _beneficiary;
+        benefactor = _benefactor;
         amount = _amount;
         state = RewardState.Pending;
         created = now;

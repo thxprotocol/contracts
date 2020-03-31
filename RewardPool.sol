@@ -108,14 +108,15 @@ contract RewardPool is Rules {
     /**
     * @dev Creates the suggested reward.
     * @param rule Reference id of the rule
+    * @param account Address of the beneficiary
     */
-    function createReward(uint256 rule) public {
-        Reward reward = new Reward(rewards.length, rule, msg.sender, rules[rule].amount, address(token), address(this));
+    function createReward(uint256 rule, address account) public {
+        Reward reward = new Reward(rewards.length, rule, account, msg.sender, rules[rule].amount, address(token), address(this));
 
         emit RewardPollCreated(rewards.length, address(reward));
 
         rewards.push(reward);
-        rewardsOf[msg.sender].push(reward);
+        rewardsOf[account].push(reward);
     }
 
     /**
