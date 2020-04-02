@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.4;
 
 import '../../IRewardPool.sol';
 import '../../math/SafeMath.sol';
@@ -10,8 +10,6 @@ contract RulePoll is BasePoll {
     uint256 public minTokensPerc = 0;
     uint256 public id;
     uint256 public proposedAmount;
-
-    IRewardPool public pool;
 
     /**
      * @dev RulePoll constructor
@@ -36,8 +34,6 @@ contract RulePoll is BasePoll {
         id = _id;
         minTokensPerc = _minTokensPerc;
         proposedAmount = _proposedAmount;
-
-        pool = IRewardPool(_poolAddress);
     }
 
     /**
@@ -51,14 +47,14 @@ contract RulePoll is BasePoll {
     /**
      * @dev override default approval check and implements the new votedTokensPercentage
      */
-    function isSubjectApproved() internal view returns(bool) {
+    function isSubjectApproved() internal view override returns(bool) {
         return yesCounter > noCounter && getVotedTokensPerc() >= minTokensPerc;
     }
 
     /**
      * @dev callback called after poll finalization
      */
-     function onPollFinish(bool agree) internal {
+     function onPollFinish(bool agree) internal override {
          pool.onRulePollFinish(id, agree, proposedAmount);
      }
 

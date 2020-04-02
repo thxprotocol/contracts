@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.4;
 
 import '../math/SafeMath.sol';
 import '../token/ERC20/IERC20.sol';
@@ -160,12 +160,12 @@ contract BasePoll {
         return isSubjectApproved();
     }
 
-    function isSubjectApproved() internal view returns(bool) {
+    function isSubjectApproved() internal view virtual returns(bool) {
         return yesCounter > noCounter;
     }
 
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal;
+    function onPollFinish(bool agree) internal virtual {}
 }

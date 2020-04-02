@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.4;
 
 import '../access/roles/MemberRole.sol';
 import '../math/SafeMath.sol';
@@ -69,7 +69,7 @@ contract Reward is BasePoll, MemberRole {
     /**
     * @dev callback called after poll finalization
     */
-    function onPollFinish(bool agree) internal {
+    function onPollFinish(bool agree) internal override {
         if (agree && finalized) {
             _onApproval();
         }
