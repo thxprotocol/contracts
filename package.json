@@ -1,0 +1,21 @@
+{
+  "name": "upgradable-contracts-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "web3": "^1.2.7"
+  },
+  "devDependencies": {
+    "@openzeppelin/cli": "^2.8.2",
+    "@openzeppelin/contracts": "^3.0.2",
+    "@openzeppelin/test-environment": "^0.1.4",
+    "chai": "^4.2.0",
+    "mocha": "^7.2.0"
+  }
+}
