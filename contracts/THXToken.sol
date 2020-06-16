@@ -6,7 +6,6 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-
 contract THXToken is ERC20, AccessControl {
     // Transfer Gateway contract address
     address public gateway;

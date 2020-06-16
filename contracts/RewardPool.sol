@@ -3,18 +3,19 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
-import "./rewards/Rewards.sol";
-import "./rules/RewardRules.sol";
+import "./access/Roles.sol";
 
-
-contract RewardPool is Ownable, AccessControl {
+contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     using SafeMath for uint256;
 
-    enum RuleState {Active, Disabled}
+    function initialize(address _owner) public initializer {
+        __Ownable_init();
+        __Roles_init(_owner);
 
-    constructor() public Ownable() {}
+        transferOwnership(_owner);
+    }
 }
