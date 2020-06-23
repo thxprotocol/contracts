@@ -1,15 +1,20 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
+const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
+const gateway = '0xF19D543f5ca6974b8b9b39Fcb923286dE4e9D975';
+
+let token = null;
 let pool = null;
 
 describe('Roles', function() {
     const [owner] = accounts;
 
     before(async () => {
+        token = await THXToken.new(gateway, owner, { from: owner });
         pool = await RewardPool.new({ from: owner });
 
-        await pool.initialize(owner);
+        await pool.initialize(owner, token.address);
     });
 
     it('can verify account to be a member', async function() {

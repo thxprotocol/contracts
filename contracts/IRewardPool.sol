@@ -1,3 +1,6 @@
+// contracts/rewards/Rewards.sol
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.4;
 
 /**
@@ -11,7 +14,11 @@ interface IRewardPool {
      * @param agree True if the rule should apply or change
      * @param proposedAmount The proposed reward size
      */
-    function onRulePollFinish(uint256 id, bool agree, uint256 proposedAmount) external;
+    function onRulePollFinish(
+        uint256 id,
+        bool agree,
+        uint256 proposedAmount
+    ) external;
 
     /**
      * @dev RewardPoll callback
@@ -26,5 +33,9 @@ interface IRewardPool {
      * @param amount The amount the beneficiary will receive
      * @param created The timestamp of the moment the reward was claimed
      */
-    function onWithdrawel(address beneficiary, uint256 amount, uint256 created) external;
+    function onWithdrawel(
+        address beneficiary,
+        uint256 amount,
+        uint256 created
+    ) external;
 }
