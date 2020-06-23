@@ -52,9 +52,7 @@ contract RewardPoll is BasePoll, Roles {
         require(msg.sender == beneficiary, 'claimer is not the beneficiary');
         require(poolBalance >= amount, 'pool balance is not sufficient');
 
-        tryToFinalize();
-
-        pool.onWithdrawel(beneficiary, amount, startTime);
+        pool.onWithdrawal(id, beneficiary, amount);
 
         state = RewardState.Withdrawn;
     }

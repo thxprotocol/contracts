@@ -28,14 +28,14 @@ interface IRewardPool {
     function onRewardPollFinish(uint256 id, bool agree) external;
 
     /**
-     * @dev Withdrawel callback
-     * @param beneficiary The addres of the account receiving the reward
-     * @param amount The amount the beneficiary will receive
-     * @param created The timestamp of the moment the reward was claimed
+     * @dev Withdrawal callback
+     * @param _id Reference to the reward
+     * @param _beneficiary Receiver of the reward
+     * @param _amount Size of the reward
      */
-    function onWithdrawel(
-        address beneficiary,
-        uint256 amount,
-        uint256 created
+    function onWithdrawal(
+        uint256 _id,
+        address _beneficiary,
+        uint256 _amount
     ) external;
 }

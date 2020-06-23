@@ -63,20 +63,25 @@ describe('RewardPool', function() {
 
         vote = await reward.votesByAddress(owner);
 
-        console.log(vote.time.toString());
-        console.log(web3.utils.fromWei(vote.weight));
-
         expect(vote.time.toNumber()).to.not.equal(0);
     });
 
     it('manager can travel 180s in time', async function() {
         const before = (await time.latest()).toNumber();
 
-        await time.increase(time.duration.minutes(3));
+        await time.increase(time.duration.minutes(5));
 
         const after = (await time.latest()).toNumber();
 
         expect(after).to.be.above(before);
+    });
+
+    it('member can finalize the reward poll', async function() {
+        expect(await reward.finalized()).to.equal(false);
+
+        await reward.tryToFinalize({ from: accounts[1] });
+
+        expect(await reward.finalized()).to.equal(true);
     });
 
     it('member can withdraw the reward', async function() {
@@ -86,9 +91,6 @@ describe('RewardPool', function() {
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(accounts[1]));
 
-        expect(newBalance).to.be.above(oldBalance);
-
-        const balance = web3.utils.fromWei(await token.balanceOf(pool.address));
-        console.log(balance);
+        expect(parseInt(newBalance, 10)).to.be.above(parseInt(oldBalance, 10));
     });
 });

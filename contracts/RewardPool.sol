@@ -18,6 +18,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     enum RewardRuleState { Active, Disabled }
 
     event RewardPollFinished(address reward, bool agree);
+    event Withdrawn(address indexed beneficiary, uint256 reward);
 
     struct RewardRule {
         uint256 id;
@@ -28,6 +29,11 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 created;
     }
 
+    struct Withdrawal {
+        address reward;
+        address beneficiary;
+    }
+
     RewardRule[] public rewardRules;
     RewardPoll[] public rewards;
 
@@ -35,6 +41,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     uint256 public rewardPollDuration = 3 minutes;
 
     mapping(address => RewardPoll[]) public rewardsOf;
+    mapping(address => Withdrawal[]) public withdrawals;
 
     IERC20 public token;
 
@@ -95,10 +102,33 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev Called when poll is finished
-     * @param id Reference to the reward rule
+     * @param id Reference to the reward
      * @param agree Bool for checking the result of the poll.
      */
     function onRewardPollFinish(uint256 id, bool agree) external {
         emit RewardPollFinished(address(rewards[id]), agree);
+    }
+
+    /**
+     * @dev callback called after reward is withdrawn
+     * @param _id Reference to the reward
+     * @param _beneficiary Receiver of the reward
+     * @param _amount Size of the reward
+     */
+    function onWithdrawal(
+        uint256 _id,
+        address _beneficiary,
+        uint256 _amount
+    ) external {
+        token.transfer(_beneficiary, _amount);
+
+        Withdrawal memory withdrawal;
+
+        withdrawal.beneficiary = _beneficiary;
+        withdrawal.reward = address(rewards[_id]);
+
+        withdrawals[_beneficiary].push(withdrawal);
+
+        emit Withdrawn(_beneficiary, _amount);
     }
 }

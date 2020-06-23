@@ -6,12 +6,15 @@ This repository holds the smart contracts used by THX Wallet. This document outl
 
 ## Features
 
--   [ ] Make a deposit
+-   [x] Make a deposit
 -   [ ] Claim a reward
--   [ ] Approve/Reject a reward proposal
--   [ ] Withdraw a reward
--   [ ] Create a reward rule proposal
--   [ ] Approve/Reject a reward rule proposal
+-   [x] Propose a reward
+-   [x] Approve a reward proposal
+-   [ ] Reject a reward proposal
+-   [x] Withdraw a reward
+-   [x] Create a reward rule proposal
+-   [ ] Approve a reward rule proposal
+-   [ ] Reject a reward rule proposal
 -   [x] Add a member
 -   [x] Revoke member role
 -   [x] Add a manager
