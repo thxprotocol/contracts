@@ -1,10 +1,11 @@
-// contracts/rewards/Rewards.sol
+// contracts/poll/RewardPoll.sol
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 
 import './BasePoll.sol';
 import '../access/Roles.sol';
@@ -18,22 +19,20 @@ contract RewardPoll is BasePoll, Roles {
 
     mapping(address => uint256[]) public voters;
 
-    uint256 public id;
     address public beneficiary;
     uint256 public amount;
     uint256 public duration;
 
-    constructor(
-        uint256 _id,
+    function initialize(
         address _beneficiary,
         uint256 _amount,
         uint256 _duration,
         address _tokenAddress,
         address _poolAddress
-    ) public {
-        require(address(_poolAddress) == msg.sender, 'caller is not the reward pool');
+    ) public initializer {
+        require(_amount > 0, 'amount is not larger than zero');
+        require(address(_beneficiary) != address(0), 'not a valid address');
 
-        id = _id;
         beneficiary = _beneficiary;
         amount = _amount;
         state = RewardState.Pending;
@@ -52,9 +51,9 @@ contract RewardPoll is BasePoll, Roles {
         require(msg.sender == beneficiary, 'claimer is not the beneficiary');
         require(poolBalance >= amount, 'pool balance is not sufficient');
 
-        pool.onWithdrawal(id, beneficiary, amount);
-
         state = RewardState.Withdrawn;
+
+        pool.onWithdrawal(address(this), beneficiary, amount);
     }
 
     /**
@@ -67,7 +66,7 @@ contract RewardPoll is BasePoll, Roles {
             _onRejection();
         }
 
-        pool.onRewardPollFinish(id, agree);
+        pool.onRewardPollFinish(address(this), agree);
     }
 
     /**

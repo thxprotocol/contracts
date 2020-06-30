@@ -1,6 +1,10 @@
+// contracts/poll/RulePoll.sol
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 
 import '../IRewardPool.sol';
 import './BasePoll.sol';
@@ -30,7 +34,7 @@ contract RulePoll is BasePoll {
         uint256 _endTime,
         uint256 _minTokensPerc,
         address _poolAddress
-    ) public {
+    ) public initializer {
         ruleId = _ruleId;
         proposal = _proposal;
         minTokensPerc = _minTokensPerc;

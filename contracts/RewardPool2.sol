@@ -12,7 +12,7 @@ import './access/Roles.sol';
 import './poll/BasePoll.sol';
 import './poll/RewardPoll.sol';
 
-contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
+contract RewardPool2 is Initializable, OwnableUpgradeSafe, Roles {
     using SafeMath for uint256;
 
     struct RewardRule {
@@ -67,12 +67,12 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     function setRewardPollDuration(uint256 time) public {
         require(msg.sender == owner(), 'caller is not owner');
 
-        rewardPollDuration = time;
+        rewardPollDuration = time * 2;
     }
 
     function setRewardRulePollDuration(uint256 time) public {
         require(msg.sender == owner(), 'caller is not owner');
-        rewardRulePollDuration = time;
+        rewardRulePollDuration = time * 2;
     }
 
     // /**
