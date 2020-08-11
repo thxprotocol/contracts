@@ -1,7 +1,7 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
+const { GATEWAY } = require('./config.js');
 const THXToken = contract.fromArtifact('THXToken');
-const gateway = '0xF19D543f5ca6974b8b9b39Fcb923286dE4e9D975';
 const Web3 = require('web3');
 const Utils = new Web3().utils;
 
@@ -11,11 +11,11 @@ describe('THXToken', function() {
     const [owner] = accounts;
 
     before(async () => {
-        token = await THXToken.new(gateway, owner, { from: owner });
+        token = await THXToken.new(GATEWAY, owner, { from: owner });
     });
 
-    it('has gateways set to ' + gateway, async function() {
-        expect(await token.gateway()).to.equal(gateway);
+    it('has gateways set to ' + GATEWAY, async function() {
+        expect(await token.gateway()).to.equal(GATEWAY);
     });
 
     it('can mint 1000 THX', async function() {

@@ -4,12 +4,11 @@
 pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 
 import '../IRewardPool.sol';
 import './BasePoll.sol';
 
-contract RulePoll is BasePoll {
+contract RewardRulePoll is BasePoll {
     using SafeMath for uint256;
 
     uint256 public minTokensPerc = 0;
@@ -20,26 +19,22 @@ contract RulePoll is BasePoll {
      * @dev RewardRulePoll constructor
      * @param _ruleId Id of the referenced Rule
      * @param _proposal Id of the referenced Rule
+     * @param _duration Poll start time
      * @param _tokenAddress ERC20 compatible token contract address
-     * @param _startTime Poll start time
-     * @param _endTime Poll end time
-     * @param _minTokensPerc Minimum token percentage for this vote
      * @param _poolAddress Reward Pool contract address
+     * @param _minTokensPerc Minimum token percentage for this vote
      */
     constructor(
         uint256 _ruleId,
         uint256 _proposal,
+        uint256 _duration,
         address _tokenAddress,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _minTokensPerc,
-        address _poolAddress
-    ) public initializer {
+        address _poolAddress,
+        uint256 _minTokensPerc
+    ) public BasePoll(_tokenAddress, _poolAddress, now, now + _duration, false) {
         ruleId = _ruleId;
         proposal = _proposal;
         minTokensPerc = _minTokensPerc;
-
-        __BasePoll_init(_tokenAddress, _poolAddress, _startTime, _endTime, false);
     }
 
     /**
@@ -61,6 +56,6 @@ contract RulePoll is BasePoll {
      * @dev callback called after poll finalization
      */
     function onPollFinish(bool agree) internal override {
-        pool.onRulePollFinish(ruleId, agree, proposal);
+        pool.onRewardRulePollFinish(ruleId, proposal, agree);
     }
 }

@@ -11,13 +11,13 @@ interface IRewardPool {
     /**
      * @dev RulePoll callback
      * @param _id The referenced rule
+     * @param _amount The proposed reward size
      * @param _agree True if the rule should apply or change
-     * @param _proposedAmount The proposed reward size
      */
-    function onRulePollFinish(
+    function onRewardRulePollFinish(
         uint256 _id,
-        bool _agree,
-        uint256 _proposedAmount
+        uint256 _amount,
+        bool _agree
     ) external;
 
     /**

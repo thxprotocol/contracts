@@ -9,7 +9,6 @@ async function main() {
     ZWeb3.initialize(web3.currentProvider);
 
     // Take the first account ganache returns as the from account.
-    const accounts = await ZWeb3.eth.getAccounts();
     const [from] = await ZWeb3.eth.getAccounts();
     const amount = web3.utils.toWei('1000');
 
@@ -30,10 +29,10 @@ async function main() {
         gas: 5000000,
         gasPrice: 5e9,
     });
+    console.log('Reward Pool Admin Project is created');
 
     // Deploy an instance of RewardPool
     const PoolContract = Contracts.getFromLocal('RewardPool');
-    const RewardPollContract = Contracts.getFromLocal('RewardPoll');
     // Make a change on the contract, and compile it.
     const PoolContractUpgraded = Contracts.getFromLocal('RewardPool2');
 
@@ -42,24 +41,24 @@ async function main() {
         from,
         initArgs: [from, token.options.address],
     });
+    console.log('Reward Pool Proxy is created');
 
-    // // Create a proxy for the upgraded contract.
-    const rewardProxy = await rewardPoolProject.createProxy(RewardPollContract, {
-        from,
-        initArgs: [accounts[1], amount, 180, token.options.address, poolProxy.options.address],
-    });
-
-    await poolProxy.methods.proposeReward(rewardProxy.options.address).send({ from });
+    await poolProxy.methods.proposeReward(from).send({ from });
+    console.log('A reward is proposed for ', from);
 
     await poolProxy.methods.setRewardPollDuration(180).send({ from });
-    await printProxy('RewardPool', poolProxy);
+    console.log('Set rewardPollDuration to 180');
+    await printProxy('* Reward Pool', poolProxy);
 
+    console.log('Reward Pool Contract is being upgraded...');
     await rewardPoolProject.upgradeProxy(poolProxy.options.address, PoolContractUpgraded, {
         from,
     });
+    console.log('Reward Pool Contract is upgraded successfully!');
 
     await poolProxy.methods.setRewardPollDuration(180).send({ from });
-    await printProxy('RewardPoolUpgraded', poolProxy);
+    console.log('Set rewardPollDuration to 180');
+    await printProxy('* Reward Pool (Upgraded)', poolProxy);
 }
 
 // We're abusing the fact that the implementation address is always stored in the same storage address.
@@ -69,10 +68,23 @@ async function getImplementationAddress(proxyAddress) {
 }
 
 async function printProxy(name, proxy) {
-    console.log(name, 'proxy address:', proxy.options.address);
+    console.log('====== START PROXY LOG ======');
+    console.log(name, 'proxy address: ', proxy.options.address);
     console.log(name, 'implementation address:', await getImplementationAddress(proxy.options.address));
-    console.log(name, 'reward config ', await proxy.methods.rewardPollDuration().call());
-    console.log(name, 'stored reward  ', await proxy.methods.rewards(0).call());
+    console.log(name, 'reward poll duration: ', await proxy.methods.rewardPollDuration().call());
+    console.log(name, 'has stored reward: ', await proxy.methods.rewards(0).call());
+    console.log('====== END PROXY LOG ======');
+
+    /* --- Example output ---
+    RewardPool proxy address: 0x1D9D098C28D539F71EBbB70a36d427d2f3616719
+    RewardPool implementation address: 0x39d0f164bdf889c43fff8b0fb6f62841b85aedfd
+    RewardPool reward config  180
+    RewardPool stored reward   0x73d40EeeF625A3338ED4f85183A81C190d0A07eb
+    RewardPoolUpgraded proxy address: 0x1D9D098C28D539F71EBbB70a36d427d2f3616719
+    RewardPoolUpgraded implementation address: 0x9791be80c6e84c6a644138feb3082231ef7f7ef8
+    RewardPoolUpgraded reward config  360
+    RewardPoolUpgraded stored reward   0x73d40EeeF625A3338ED4f85183A81C190d0A07eb
+    */
 }
 
 main();

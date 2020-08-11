@@ -21,24 +21,20 @@ contract RewardPoll is BasePoll, Roles {
 
     address public beneficiary;
     uint256 public amount;
-    uint256 public duration;
 
-    function initialize(
+    constructor(
         address _beneficiary,
         uint256 _amount,
         uint256 _duration,
         address _tokenAddress,
         address _poolAddress
-    ) public initializer {
+    ) public BasePoll(_tokenAddress, _poolAddress, now, now + _duration, false) {
         require(_amount > 0, 'amount is not larger than zero');
         require(address(_beneficiary) != address(0), 'not a valid address');
 
         beneficiary = _beneficiary;
         amount = _amount;
         state = RewardState.Pending;
-        duration = _duration;
-
-        __BasePoll_init(_tokenAddress, _poolAddress, now, now + _duration, false);
     }
 
     /**

@@ -46,20 +46,21 @@ contract BasePoll is Initializable {
     }
 
     /**
-     * @dev BasePoll initializer
+     * @dev BasePoll Constructor
      * @param _tokenAddress ERC20 compatible token contract address
      * @param _startTime Poll start time
      * @param _endTime Poll end time
      * @param _checkTransfersAfterEnd Checks transfer after end
      */
-    function __BasePoll_init(
+    constructor(
         address _tokenAddress,
         address _poolAddress,
         uint256 _startTime,
         uint256 _endTime,
         bool _checkTransfersAfterEnd
-    ) public initializer {
-        require(_tokenAddress != address(0), 'is not a valid address');
+    ) public {
+        require(_tokenAddress != address(0), 'tokenAddress is not a valid address');
+        require(_poolAddress != address(0), 'poolAddress is not a valid address');
         require(_startTime >= now && _endTime > _startTime, 'is not a valid time constraint');
 
         token = IERC20(_tokenAddress);

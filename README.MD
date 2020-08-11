@@ -24,28 +24,54 @@ This repository holds the smart contracts used by THX Wallet. This document outl
 
 This section documents user data that is stored in the smart contracts on the loom network and should clarify why it needs to be stored.
 
+## Events
+
+```
+event Withdrawn(address indexed beneficiary, uint256 reward)
+```
+
+```
+event RewardRulePollCreated(uint256 id, uint256 proposal, address sender)
+```
+
+```
+event RewardRulePollFinished(uint256 id, uint256 amount)
+```
+
+```
+event RewardRuleUpdated(uint256 id, RuleState state, uint256 amount)
+```
+
+```
+event RewardRulePollFinished(uint256 id, uint256 amount)
+```
+
+```
+event RewardPollFinished(address reward, bool agree)
+```
+
 ## Methods
 
-### RewardPool
-
 ```
-...list all methods
-```
-
-### THXToken
-
-```
-...list all methods
+// Initializes the reward pool and sets the owner. Called when contract upgrades are available.
+function initialize(address _owner, address _tokenAddress) public initializer
 ```
 
-### THXTokenRinkeby
+```
+// Set the duration for a reward poll.
+function setRewardPollDuration(uint256 _duration) public
+```
 
 ```
-...list all methods
-
+// Set the duration for a reward poll.upgrades are available.
+function setRewardPollDuration(uint256 _duration) public
 ```
+
+> More should be added to this list...
 
 ## OpenZeppelin
+
+This sections described the Open Zeppeling standard contracts that are used in the THX contract layer.
 
 ### [ERC20 Token](https://docs.openzeppelin.com/contracts/3.x/erc20)
 
@@ -57,4 +83,4 @@ RewardPool is derived from the Ownable smart contract and inherits ownership fea
 
 ### [Access Control](https://docs.openzeppelin.com/contracts/3.x/access-control)
 
-AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim rewards and vote for reward rule proposals.
+AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim rewards and vote on reward rule proposals.
