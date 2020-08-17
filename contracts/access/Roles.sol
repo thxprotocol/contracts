@@ -10,8 +10,8 @@ contract Roles is AccessControlUpgradeSafe {
     bytes32 public constant MEMBER_ROLE = keccak256('MEMBER_ROLE');
     bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
-    EnumerableSet.AddressSet public members;
-    EnumerableSet.AddressSet public managers;
+    EnumerableSet.AddressSet members;
+    EnumerableSet.AddressSet managers;
 
     modifier onlyMember() {
         require(hasRole(MEMBER_ROLE, msg.sender), 'caller is not a member');
