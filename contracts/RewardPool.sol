@@ -28,16 +28,23 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         address beneficiary;
     }
 
+    struct Deposit {
+        address member;
+        uint256 amount;
+    }
+
     RewardRule[] public rewardRules;
     RewardPoll[] public rewards;
+    Deposit[] public deposits;
 
     uint256 public rewardPollDuration;
     uint256 public rewardRulePollDuration;
     uint256 public minRewardRulePollTokensPerc;
     uint256 public minRewardPollTokensPerc;
 
-    mapping(address => RewardPoll[]) public rewardsOf;
+    mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawals;
+    mapping(address => RewardPoll[]) public rewardsOf;
 
     IERC20 public token;
 
@@ -47,12 +54,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     event Withdrawn(address indexed beneficiary, uint256 reward);
     event Deposited(address indexed sender, uint256 amount);
-
     event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
     event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
-
     event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
-
     event RewardPollCreated(address reward);
     event RewardPollFinished(address reward, bool agree);
 
@@ -71,14 +75,37 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
+     * @dev Get the total amount of deposits in this pool
+     */
+    function getDepositCount() public returns (uint256) {
+        return deposits.length;
+    }
+
+    /**
+     * @dev Get the amount of deposits for a given address
+     * @param _member Address of the sender of deposits
+     */
+    function getDepositCountOf(address _member) public returns (uint256) {
+        return depositsOf[_member].length;
+    }
+
+    /**
      * @dev Store a deposit in the contract
      * @param _amount Size of the deposit
      */
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) public onlyMember {
         require(_amount > 0, 'amount can not be 0 or negative');
         require(token.balanceOf(msg.sender) >= _amount, 'sender has not enought tokens');
 
         token.transferFrom(msg.sender, address(this), _amount);
+
+        Deposit memory deposit;
+
+        deposit.amount = _amount;
+        deposit.member = msg.sender;
+
+        deposits.push(deposit);
+        depositsOf[msg.sender].push(deposit);
 
         emit Deposited(msg.sender, _amount);
     }
