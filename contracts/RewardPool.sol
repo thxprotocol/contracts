@@ -77,7 +77,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Get the total amount of deposits in this pool
      */
-    function getDepositCount() public returns (uint256) {
+    function getDepositCount() public view returns (uint256) {
         return deposits.length;
     }
 
@@ -85,7 +85,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @dev Get the amount of deposits for a given address
      * @param _member Address of the sender of deposits
      */
-    function getDepositCountOf(address _member) public returns (uint256) {
+    function getDepositCountOf(address _member) public view returns (uint256) {
         return depositsOf[_member].length;
     }
 
@@ -99,13 +99,13 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
         token.transferFrom(msg.sender, address(this), _amount);
 
-        Deposit memory deposit;
+        Deposit memory d;
 
-        deposit.amount = _amount;
-        deposit.member = msg.sender;
+        d.amount = _amount;
+        d.member = msg.sender;
 
-        deposits.push(deposit);
-        depositsOf[msg.sender].push(deposit);
+        deposits.push(d);
+        depositsOf[msg.sender].push(d);
 
         emit Deposited(msg.sender, _amount);
     }
