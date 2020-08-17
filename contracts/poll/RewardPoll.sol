@@ -22,6 +22,14 @@ contract RewardPoll is BasePoll, Roles {
     address public beneficiary;
     uint256 public amount;
 
+    /**
+     * @dev RewardPoll Constructor
+     * @param _beneficiary Beneficiary of the reward
+     * @param _amount Size of the reward
+     * @param _duration Poll duration
+     * @param _tokenAddress ERC20 compatible token contract address
+     * @param _poolAddress Reward Pool contract address
+     */
     constructor(
         address _beneficiary,
         uint256 _amount,

@@ -34,7 +34,7 @@ describe('Reward Rules', function() {
     });
 
     it('can create a reward rule when I am a member', async function() {
-        await pool.addRewardRule({ from });
+        await pool.addRewardRule(50, { from });
 
         const rule = await pool.rewardRules(0);
 

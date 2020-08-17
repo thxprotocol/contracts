@@ -1,6 +1,6 @@
-const Web3 = require('web3');
 const { ZWeb3, ProxyAdminProject, Contracts } = require('@openzeppelin/upgrades');
-const gateway = '0xF19D543f5ca6974b8b9b39Fcb923286dE4e9D975';
+const Web3 = require('web3');
+const { GATEWAY } = require('./test/config.js');
 
 const web3 = new Web3('http://localhost:7545');
 
@@ -9,15 +9,16 @@ async function main() {
     ZWeb3.initialize(web3.currentProvider);
 
     // Take the first account ganache returns as the from account.
-    const [from] = await ZWeb3.eth.getAccounts();
+    const accounts = await ZWeb3.eth.getAccounts();
+    const [from] = accounts;
     const amount = web3.utils.toWei('1000');
 
     // Create the token contract
-    const TokenContract = Contracts.getFromLocal('THXToken');
-    const tokenContract = new ZWeb3.eth.Contract(TokenContract.schema.abi);
+    const Token = Contracts.getFromLocal('THXToken');
+    const tokenContract = new ZWeb3.eth.Contract(Token.schema.abi);
 
     const token = await tokenContract
-        .deploy({ data: TokenContract.schema.bytecode, arguments: [gateway, from] })
+        .deploy({ data: Token.schema.bytecode, arguments: [GATEWAY, from] })
         .send({ from, gas: 5000000, gasPrice: 5e9 });
 
     // Mint THX for owner
@@ -34,7 +35,7 @@ async function main() {
     // Deploy an instance of RewardPool
     const PoolContract = Contracts.getFromLocal('RewardPool');
     // Make a change on the contract, and compile it.
-    const PoolContractUpgraded = Contracts.getFromLocal('RewardPool2');
+    const PoolContractUpgraded = Contracts.getFromLocal('RewardPool');
 
     // Create a proxy for the first contract.
     const poolProxy = await rewardPoolProject.createProxy(PoolContract, {
@@ -43,11 +44,16 @@ async function main() {
     });
     console.log('Reward Pool Proxy is created');
 
-    await poolProxy.methods.proposeReward(from).send({ from });
-    console.log('A reward is proposed for ', from);
+    await token.methods.mint(poolProxy.options.address, 5000).send({ from });
+    console.log('Reward Pool Proxy gains 5000');
 
     await poolProxy.methods.setRewardPollDuration(180).send({ from });
     console.log('Set rewardPollDuration to 180');
+
+    const tx = await poolProxy.methods.proposeReward(100, accounts[1]).send({ from });
+    console.log(tx);
+    console.log('A reward is proposed for ', accounts[1]);
+
     await printProxy('* Reward Pool', poolProxy);
 
     console.log('Reward Pool Contract is being upgraded...');

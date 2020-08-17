@@ -48,6 +48,7 @@ contract BasePoll is Initializable {
     /**
      * @dev BasePoll Constructor
      * @param _tokenAddress ERC20 compatible token contract address
+     * @param _poolAddress Reward Pool contract address
      * @param _startTime Poll start time
      * @param _endTime Poll end time
      * @param _checkTransfersAfterEnd Checks transfer after end

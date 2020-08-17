@@ -91,15 +91,18 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev Creates a reward claim for a rule.
+     * @param _amount Initial size for the reward rule.
      */
-    function addRewardRule() public {
+    function addRewardRule(uint256 _amount) public {
         require(msg.sender == owner(), 'caller is not owner');
 
         RewardRule memory rule;
 
         rule.id = rewardRules.length;
-        rule.amount = 0;
+        rule.amount = _amount;
         rule.state = RewardRuleState.Disabled;
+
+        _createRewardRulePoll(rule.id, _amount);
 
         rewardRules.push(rule);
     }

@@ -1,4 +1,4 @@
-# THX Reward System - Smart Contract Layer
+# THX - Reward Pool
 
 ## Abstract
 
@@ -7,13 +7,13 @@ This repository holds the smart contracts used by THX Wallet. This document outl
 ## Features
 
 -   [x] Make a deposit
--   [ ] Claim a reward
+-   [x] Claim a reward
 -   [x] Propose a reward
 -   [x] Approve a reward proposal
 -   [ ] Reject a reward proposal
 -   [x] Withdraw a reward
 -   [x] Create a reward rule proposal
--   [ ] Approve a reward rule proposal
+-   [x] Approve a reward rule proposal
 -   [ ] Reject a reward rule proposal
 -   [x] Add a member
 -   [x] Revoke member role
@@ -35,7 +35,7 @@ event RewardRulePollCreated(uint256 id, uint256 proposal, address sender)
 ```
 
 ```
-event RewardRulePollFinished(uint256 id, uint256 amount)
+event RewardRulePoll
 ```
 
 ```
@@ -49,6 +49,8 @@ event RewardRulePollFinished(uint256 id, uint256 amount)
 ```
 event RewardPollFinished(address reward, bool agree)
 ```
+
+_More should be added to this list..._
 
 ## Methods
 
@@ -67,11 +69,11 @@ function setRewardPollDuration(uint256 _duration) public
 function setRewardPollDuration(uint256 _duration) public
 ```
 
-> More should be added to this list...
+_More should be added to this list..._
 
 ## OpenZeppelin
 
-This sections described the Open Zeppeling standard contracts that are used in the THX contract layer.
+This sections described the Open Zeppelin standard contracts that are used in the THX contract layer.
 
 ### [ERC20 Token](https://docs.openzeppelin.com/contracts/3.x/erc20)
 
