@@ -46,6 +46,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     enum RewardRuleState { Enabled, Disabled }
 
     event Withdrawn(address indexed beneficiary, uint256 reward);
+    event Deposited(address indexed sender, uint256 amount);
 
     event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
     event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
@@ -78,6 +79,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         require(token.balanceOf(msg.sender) >= _amount, 'sender has not enought tokens');
 
         token.transferFrom(msg.sender, address(this), _amount);
+
+        emit Deposited(msg.sender, _amount);
     }
 
     /**
