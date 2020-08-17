@@ -82,11 +82,33 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
+     * @dev Get the total amount of deposits in this pool
+     */
+    function getRewardCount() public view returns (uint256) {
+        return rewards.length;
+    }
+
+    /**
+     * @dev Get the total amount of deposits in this pool
+     */
+    function getRewardRuleCount() public view returns (uint256) {
+        return rewardRules.length;
+    }
+
+    /**
      * @dev Get the amount of deposits for a given address
      * @param _member Address of the sender of deposits
      */
     function getDepositCountOf(address _member) public view returns (uint256) {
         return depositsOf[_member].length;
+    }
+
+    /**
+     * @dev Get the amount of rewards for a given address
+     * @param _member Address of the sender of deposits
+     */
+    function getRewardCountOf(address _member) public view returns (uint256) {
+        return rewardsOf[_member].length;
     }
 
     /**
