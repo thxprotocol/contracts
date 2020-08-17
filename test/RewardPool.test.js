@@ -32,7 +32,14 @@ describe('Reward Pool', function() {
         const amount = web3.utils.toWei('5000');
         const oldBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 
-        await token.mint(pool.address, amount, { from });
+        // Give account[0] some tokens
+        await token.mint(from, amount, { from });
+
+        // Let account[0] approve the tx
+        await token.approve(pool.address, amount, { from });
+
+        // Instruct the contract to do the deposit
+        await pool.deposit(amount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 

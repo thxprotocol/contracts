@@ -70,6 +70,17 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
+     * @dev Store a deposit in the contract
+     * @param _amount Size of the deposit
+     */
+    function deposit(uint256 _amount) public {
+        require(_amount > 0, 'amount can not be 0 or negative');
+        require(token.balanceOf(msg.sender) >= _amount, 'sender has not enought tokens');
+
+        token.transferFrom(msg.sender, address(this), _amount);
+    }
+
+    /**
      * @dev Set the duration for a reward poll.
      * @param _duration Duration in seconds
      */
