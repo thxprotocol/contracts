@@ -53,10 +53,22 @@ describe('Reward Pool', function() {
         expect(parseInt(duration, 10)).to.equal(parseInt(duration, 10));
     });
 
+    it('can make ' + accounts[1] + 'a member', async function() {
+        const amount = web3.utils.toWei('100');
+
+        await pool.addMember(accounts[1], { from });
+
+        expect(await pool.isMember(from)).to.equal(true);
+        expect(await pool.isMember(accounts[1])).to.equal(true);
+
+        await pool.proposeReward(amount, accounts[1], { from });
+    });
+
     it('can propose a 100 THX reward for ' + accounts[1], async function() {
         const amount = web3.utils.toWei('100');
 
         expect(await pool.isMember(from)).to.equal(true);
+        expect(await pool.isMember(accounts[1])).to.equal(true);
 
         await pool.proposeReward(amount, accounts[1], { from });
     });

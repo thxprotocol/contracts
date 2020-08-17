@@ -5,7 +5,6 @@ pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
 
-import '../IRewardPool.sol';
 import './BasePoll.sol';
 
 contract RewardRulePoll is BasePoll {
@@ -22,7 +21,7 @@ contract RewardRulePoll is BasePoll {
      * @param _duration Poll start time
      * @param _tokenAddress ERC20 compatible token contract address
      * @param _poolAddress Reward Pool contract address
-     * @param _minTokensPerc Minimum token percentage for this vote
+     * @param _minTokensPerc Minimum token percentage for this poll
      */
     constructor(
         uint256 _ruleId,

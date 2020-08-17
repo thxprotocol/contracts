@@ -19,6 +19,7 @@ contract RewardPoll is BasePoll, Roles {
 
     mapping(address => uint256[]) public voters;
 
+    uint256 public minTokensPerc = 0;
     address public beneficiary;
     uint256 public amount;
 
@@ -35,7 +36,8 @@ contract RewardPoll is BasePoll, Roles {
         uint256 _amount,
         uint256 _duration,
         address _tokenAddress,
-        address _poolAddress
+        address _poolAddress,
+        uint256 _minTokensPerc
     ) public BasePoll(_tokenAddress, _poolAddress, now, now + _duration, false) {
         require(_amount > 0, 'amount is not larger than zero');
         require(address(_beneficiary) != address(0), 'not a valid address');
@@ -43,6 +45,7 @@ contract RewardPoll is BasePoll, Roles {
         beneficiary = _beneficiary;
         amount = _amount;
         state = RewardState.Pending;
+        minTokensPerc = _minTokensPerc;
     }
 
     /**
