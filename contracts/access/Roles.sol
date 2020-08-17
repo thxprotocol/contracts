@@ -10,8 +10,11 @@ contract Roles is AccessControlUpgradeSafe {
     bytes32 public constant MEMBER_ROLE = keccak256('MEMBER_ROLE');
     bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
-    EnumerableSet.AddressSet members;
-    EnumerableSet.AddressSet managers;
+    mapping(address => address) public members;
+    mapping(address => address) public managers;
+
+    EnumerableSet.AddressSet _members;
+    EnumerableSet.AddressSet _managers;
 
     modifier onlyMember() {
         require(hasRole(MEMBER_ROLE, msg.sender), 'caller is not a member');
@@ -40,7 +43,8 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function addMember(address _account) public {
         grantRole(MEMBER_ROLE, _account);
-        members.add(_account);
+        _members.add(_account);
+        members[_account] = _account;
     }
 
     /**
@@ -57,7 +61,8 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function removeMember(address _account) public onlyManager {
         revokeRole(MEMBER_ROLE, _account);
-        members.remove(_account);
+        _members.remove(_account);
+        members[_account] = address(0);
     }
 
     /**
@@ -66,7 +71,8 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function addManager(address _account) public onlyManager {
         grantRole(MANAGER_ROLE, _account);
-        members.add(_account);
+        _managers.add(_account);
+        managers[_account] = _account;
     }
 
     /**
@@ -83,6 +89,7 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function removeManager(address _account) public onlyManager {
         revokeRole(MANAGER_ROLE, _account);
-        members.remove(_account);
+        _managers.remove(_account);
+        managers[_account] = address(0);
     }
 }
