@@ -15,7 +15,7 @@ contract Roles is AccessControlUpgradeSafe {
 
     modifier onlyMember() {
         require(
-            hasRole(MEMBER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+            hasRole(MEMBER_ROLE, _msgSender()) || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
             'caller is not a member or role admin'
         );
         _;
@@ -23,7 +23,7 @@ contract Roles is AccessControlUpgradeSafe {
 
     modifier onlyManager() {
         require(
-            hasRole(MANAGER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+            hasRole(MANAGER_ROLE, _msgSender()) || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
             'caller is not a manager or role admin'
         );
         _;
