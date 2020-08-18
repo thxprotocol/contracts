@@ -15,10 +15,13 @@ describe('Roles', function() {
         pool = await RewardPool.new({ from });
 
         await pool.initialize(from, token.address);
+
+        await pool.addMember(from, { from });
+        await pool.addManager(from, { from });
     });
 
     it('can verify account to be a member', async function() {
-        expect(await pool.isMember(accounts[1], { from })).to.be.false;
+        expect(await pool.isMember(from, { from })).to.be.true;
     });
 
     it('can add a member', async function() {
