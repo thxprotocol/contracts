@@ -43,7 +43,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     uint256 public minRewardPollTokensPerc;
 
     mapping(address => Deposit[]) public depositsOf;
-    mapping(address => Withdrawal[]) public withdrawals;
+    mapping(address => Withdrawal[]) public withdrawalsOf;
     mapping(address => RewardPoll[]) public rewardsOf;
 
     IERC20 public token;
@@ -326,7 +326,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         withdrawal.beneficiary = _beneficiary;
         withdrawal.reward = _reward;
 
-        withdrawals[_beneficiary].push(withdrawal);
+        withdrawalsOf[_beneficiary].push(withdrawal);
 
         emit Withdrawn(_beneficiary, _amount);
     }
