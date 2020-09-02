@@ -21,16 +21,19 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 amount;
         RewardRuleState state;
         RewardRulePoll poll;
+        uint256 updated;
     }
 
     struct Withdrawal {
         address reward;
         address beneficiary;
+        uint256 timestamp;
     }
 
     struct Deposit {
         address member;
         uint256 amount;
+        uint256 timestamp;
     }
 
     RewardRule[] public rewardRules;
@@ -50,7 +53,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /*==== IMPORTANT: Do not alter (only extend) the storage layout above this line! ====*/
 
-    enum RewardRuleState { Enabled, Disabled }
+    enum RewardRuleState { Disabled, Enabled }
 
     event Withdrawn(address indexed beneficiary, uint256 reward);
     event Deposited(address indexed sender, uint256 amount);
@@ -104,6 +107,14 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
+     * @dev Get the amount of deposits for a given address
+     * @param _member Address of the sender of deposits
+     */
+    function getWithdrawalCount(address _member) public view returns (uint256) {
+        return withdrawalsOf[_member].length;
+    }
+
+    /**
      * @dev Get the amount of rewards for a given address
      * @param _member Address of the sender of deposits
      */
@@ -117,7 +128,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function deposit(uint256 _amount) public onlyMember {
         require(_amount > 0, 'amount can not be 0 or negative');
-        require(token.balanceOf(msg.sender) >= _amount, 'sender has not enought tokens');
+        require(token.balanceOf(msg.sender) >= _amount, 'sender has not enough tokens');
 
         token.transferFrom(msg.sender, address(this), _amount);
 
@@ -125,6 +136,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
         d.amount = _amount;
         d.member = msg.sender;
+        d.timestamp = now;
 
         deposits.push(d);
         depositsOf[msg.sender].push(d);
@@ -158,8 +170,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function setMinRewardRulePollTokensPerc(uint256 _minTokensPerc) public {
         require(msg.sender == owner(), 'caller is not owner');
-        require(_minTokensPerc > 0, 'perc is less than 0');
-        require(_minTokensPerc < 100, 'perc is larger than 100');
+        require(_minTokensPerc >= 0, 'perc is less than 0');
+        require(_minTokensPerc <= 100, 'perc is larger than 100');
 
         minRewardRulePollTokensPerc = _minTokensPerc;
     }
@@ -170,8 +182,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function setMinRewardPollTokensPerc(uint256 _minTokensPerc) public {
         require(msg.sender == owner(), 'caller is not owner');
-        require(_minTokensPerc > 0, 'perc is less than 0');
-        require(_minTokensPerc < 100, 'perc is larger than 100');
+        require(_minTokensPerc >= 0, 'perc is less than 0');
+        require(_minTokensPerc <= 100, 'perc is larger than 100');
 
         minRewardPollTokensPerc = _minTokensPerc;
     }
@@ -182,13 +194,15 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function addRewardRule(uint256 _amount) public {
         require(msg.sender == owner(), 'caller is not owner');
+        require(_amount >= 0, 'amount can not be negative');
 
         RewardRule memory rule;
 
         rule.id = rewardRules.length;
-        rule.amount = _amount;
+        rule.amount = 0;
         rule.state = RewardRuleState.Disabled;
         rule.poll = _createRewardRulePoll(rewardRules.length, _amount);
+        rule.updated = now;
 
         rewardRules.push(rule);
     }
@@ -201,7 +215,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     function updateRewardRule(uint256 _id, uint256 _amount) public {
         require(rewardRules[_id].poll.finalized(), 'another poll is running');
         require(isMember(msg.sender), 'caller is not a member');
-        require(_amount >= 0, 'proposed amount is negative');
+        require(_amount >= 0, 'amount can not be negative');
         require(_amount != rewardRules[_id].amount, 'proposed amount is equal to the current amount');
 
         rewardRules[_id].poll = _createRewardRulePoll(_id, _amount);
@@ -321,12 +335,13 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     ) external {
         token.transfer(_beneficiary, _amount);
 
-        Withdrawal memory withdrawal;
+        Withdrawal memory w;
 
-        withdrawal.beneficiary = _beneficiary;
-        withdrawal.reward = _reward;
+        w.beneficiary = _beneficiary;
+        w.reward = _reward;
+        w.timestamp = now;
 
-        withdrawalsOf[_beneficiary].push(withdrawal);
+        withdrawalsOf[_beneficiary].push(w);
 
         emit Withdrawn(_beneficiary, _amount);
     }

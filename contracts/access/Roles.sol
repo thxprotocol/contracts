@@ -13,6 +13,11 @@ contract Roles is AccessControlUpgradeSafe {
     EnumerableSet.AddressSet _members;
     EnumerableSet.AddressSet _managers;
 
+    event MemberAdded(address account);
+    event MemberRemoved(address account);
+    event ManagerAdded(address account);
+    event ManagerRemoved(address account);
+
     modifier onlyMember() {
         require(
             hasRole(MEMBER_ROLE, _msgSender()) || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
@@ -47,6 +52,7 @@ contract Roles is AccessControlUpgradeSafe {
     function addMember(address _account) public onlyMember {
         grantRole(MEMBER_ROLE, _account);
         _members.add(_account);
+        emit MemberAdded(_account);
     }
 
     /**
@@ -64,6 +70,7 @@ contract Roles is AccessControlUpgradeSafe {
     function removeMember(address _account) public onlyManager {
         revokeRole(MEMBER_ROLE, _account);
         _members.remove(_account);
+        emit MemberRemoved(_account);
     }
 
     /**
@@ -73,6 +80,7 @@ contract Roles is AccessControlUpgradeSafe {
     function addManager(address _account) public onlyManager {
         grantRole(MANAGER_ROLE, _account);
         _managers.add(_account);
+        emit ManagerAdded(_account);
     }
 
     /**
@@ -90,5 +98,6 @@ contract Roles is AccessControlUpgradeSafe {
     function removeManager(address _account) public onlyManager {
         revokeRole(MANAGER_ROLE, _account);
         _managers.remove(_account);
+        emit ManagerRemoved(_account);
     }
 }

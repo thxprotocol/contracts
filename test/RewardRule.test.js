@@ -9,7 +9,7 @@ let token = null;
 let pool = null;
 let poll = null;
 
-describe('Reward Rules', function() {
+describe('Reward Rules', function () {
     const [from] = accounts;
 
     before(async () => {
@@ -19,7 +19,44 @@ describe('Reward Rules', function() {
         await pool.initialize(from, token.address);
     });
 
-    it('expects the initial duration to be 0', async function() {
+    async function vote(poll, agree) {
+        let vote = await poll.votesByAddress(from);
+
+        expect(vote.time.toNumber()).to.equal(0);
+
+        await poll.vote(from, agree, { from });
+
+        vote = await poll.votesByAddress(from);
+
+        expect(vote.time.toNumber()).to.not.equal(0);
+    }
+
+    async function timeTravel(minutes) {
+        const before = (await time.latest()).toNumber();
+
+        await time.increase(time.duration.minutes(minutes + 1));
+
+        const after = (await time.latest()).toNumber();
+
+        expect(after).to.be.above(before);
+    }
+
+    async function finalize(poll) {
+        expect(await poll.finalized()).to.equal(false);
+
+        await poll.tryToFinalize({ from });
+
+        expect(await poll.finalized()).to.equal(true);
+    }
+
+    it('expects voters to own tokens', async function () {
+        const balance = web3.utils.toWei('1000', 'ether');
+
+        await token.mint(from, balance, { from });
+        await token.mint(accounts[1], balance, { from });
+    });
+
+    it('expects the initial duration to be 0', async function () {
         const duration = await pool.rewardRulePollDuration();
 
         expect(parseInt(duration, 10)).to.equal(0);
@@ -27,7 +64,7 @@ describe('Reward Rules', function() {
 
     it(
         'can set the reward rule poll duration to ' + REWARD_RULE_POLL_DURATION + ' seconds (3 minutes)',
-        async function() {
+        async function () {
             await pool.setRewardRulePollDuration(REWARD_RULE_POLL_DURATION, { from });
 
             const duration = await pool.rewardRulePollDuration();
@@ -36,15 +73,15 @@ describe('Reward Rules', function() {
         },
     );
 
-    it('can set the reward rule poll min tokens percentage to 0', async function() {
-        await pool.setMinRewardRulePollTokensPerc(10, { from });
+    it('can set the reward rule poll min tokens percentage to 0', async function () {
+        await pool.setMinRewardRulePollTokensPerc(0, { from });
 
         const minTokensPerc = await pool.minRewardRulePollTokensPerc();
 
-        expect(parseInt(minTokensPerc, 10)).to.equal(10);
+        expect(parseInt(minTokensPerc, 10)).to.equal(0);
     });
 
-    it('can not create a reward rule when I am not a member', async function() {
+    it('can not create a reward rule when I am not a member', async function () {
         try {
             await pool.addRewardRule({ from: accounts[1] });
         } catch (error) {
@@ -52,15 +89,16 @@ describe('Reward Rules', function() {
         }
     });
 
-    it('can create a reward rule when I am a manager', async function() {
+    it('can create a reward rule with size 50 as the pool owner', async function () {
         await pool.addRewardRule(50, { from });
 
         const rule = await pool.rewardRules(0);
 
-        expect(parseInt(rule.amount, 10)).to.equal(50);
+        expect(parseInt(rule.amount, 10)).to.equal(0);
+        expect(parseInt(rule.state, 10)).to.equal(0);
     });
 
-    it('can see the state of the reward rule poll contract state', async function() {
+    it('can see the proposal in the poll contract', async function () {
         const rule = await pool.rewardRules(0);
 
         poll = contract.fromArtifact('RewardRulePoll', rule.poll);
@@ -72,43 +110,20 @@ describe('Reward Rules', function() {
         expect(parseInt(proposal, 10)).to.equal(50);
     });
 
-    it('can vote for a rule proposal', async function() {
-        let vote = await poll.votesByAddress(from);
+    it('can vote for a rule proposal', async () => vote(poll, true));
 
-        expect(vote.time.toNumber()).to.equal(0);
+    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
 
-        await poll.vote(from, true, { from });
+    it('can finalize the reward rule poll', async () => finalize(poll));
 
-        vote = await poll.votesByAddress(from);
-
-        expect(vote.time.toNumber()).to.not.equal(0);
-    });
-
-    it('can travel 180s in time', async function() {
-        const before = (await time.latest()).toNumber();
-
-        await time.increase(time.duration.minutes(3));
-
-        const after = (await time.latest()).toNumber();
-
-        expect(after).to.be.above(before);
-    });
-
-    it('can finalize the reward rule poll', async function() {
-        expect(await poll.finalized()).to.equal(false);
-
-        await poll.tryToFinalize({ from: accounts[1] });
-
-        expect(await poll.finalized()).to.equal(true);
-    });
-
-    it('can read the new rule amount', async function() {
+    it('can read the enabled rule amount', async function () {
         const rule = await pool.rewardRules(0);
 
-        expect(parseInt(rule.amount, 10)).to.not.equal(100);
+        expect(parseInt(rule.amount, 10)).to.equal(50);
+        expect(parseInt(rule.state, 10)).to.equal(1);
     });
 
-    it('can update the reward rule for a reward size of 100', async function() {
+    it('can update the reward rule for a reward size of 100', async function () {
         let rule = await pool.rewardRules(0);
 
         await pool.updateRewardRule(0, 100, { from });
@@ -116,5 +131,46 @@ describe('Reward Rules', function() {
         rule = await pool.rewardRules(0);
 
         expect(rule.poll).to.not.equal(poll.address);
+
+        poll = contract.fromArtifact('RewardRulePoll', rule.poll);
+    });
+
+    it('can vote for a rule proposal', async () => vote(poll, true));
+
+    it('can travel ' + REWARD_RULE_POLL_DURATION + '180s in time', async () =>
+        timeTravel(REWARD_RULE_POLL_DURATION / 60),
+    );
+
+    it('can finalize the reward rule poll', async () => finalize(poll));
+
+    it('can read the enabled rule amount', async function () {
+        const rule = await pool.rewardRules(0);
+
+        expect(parseInt(rule.amount, 10)).to.equal(100);
+        expect(parseInt(rule.state, 10)).to.equal(1);
+    });
+
+    it('can disable a reward rule', async function () {
+        let rule = await pool.rewardRules(0);
+
+        await pool.updateRewardRule(0, 0, { from });
+
+        rule = await pool.rewardRules(0);
+
+        expect(rule.poll).to.not.equal(poll.address);
+
+        poll = contract.fromArtifact('RewardRulePoll', rule.poll);
+    });
+
+    it('can vote for a rule proposal', async () => vote(poll, true));
+
+    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
+
+    it('can finalize the reward rule poll', async () => finalize(poll));
+
+    it('can see that the rule is disabled', async function () {
+        const rule = await pool.rewardRules(0);
+
+        expect(parseInt(rule.state, 10)).to.equal(0);
     });
 });
