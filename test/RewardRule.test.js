@@ -1,9 +1,8 @@
-const { time } = require('@openzeppelin/test-helpers');
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
-const { GATEWAY, REWARD_RULE_POLL_DURATION } = require('./config.js');
+const { GATEWAY, REWARD_RULE_POLL_DURATION, vote, timeTravel, finalize } = require('./config.js');
 
 let token = null;
 let pool = null;
@@ -18,36 +17,6 @@ describe('Reward Rules', function () {
 
         await pool.initialize(from, token.address);
     });
-
-    async function vote(poll, agree) {
-        let vote = await poll.votesByAddress(from);
-
-        expect(vote.time.toNumber()).to.equal(0);
-
-        await poll.vote(from, agree, { from });
-
-        vote = await poll.votesByAddress(from);
-
-        expect(vote.time.toNumber()).to.not.equal(0);
-    }
-
-    async function timeTravel(minutes) {
-        const before = (await time.latest()).toNumber();
-
-        await time.increase(time.duration.minutes(minutes + 1));
-
-        const after = (await time.latest()).toNumber();
-
-        expect(after).to.be.above(before);
-    }
-
-    async function finalize(poll) {
-        expect(await poll.finalized()).to.equal(false);
-
-        await poll.tryToFinalize({ from });
-
-        expect(await poll.finalized()).to.equal(true);
-    }
 
     it('expects voters to own tokens', async function () {
         const balance = web3.utils.toWei('1000', 'ether');
