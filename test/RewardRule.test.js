@@ -2,7 +2,7 @@ const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
-const { GATEWAY, REWARD_RULE_POLL_DURATION, vote, timeTravel, finalize } = require('./config.js');
+const { GATEWAY, REWARD_RULE_POLL_DURATION, vote, timeTravel, finalize } = require('./shared.js');
 
 let token = null;
 let pool = null;

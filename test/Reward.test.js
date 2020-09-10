@@ -10,7 +10,7 @@ const {
     vote,
     timeTravel,
     finalize,
-} = require('./config.js');
+} = require('./shared.js');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
 

@@ -1,6 +1,6 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
-const { GATEWAY } = require('./config.js');
+const { GATEWAY } = require('./shared.js');
 const THXToken = contract.fromArtifact('THXToken');
 const Web3 = require('web3');
 const Utils = new Web3().utils;

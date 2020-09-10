@@ -1,7 +1,7 @@
 const { time } = require('@openzeppelin/test-helpers');
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
-const { GATEWAY } = require('./config.js');
+const { GATEWAY } = require('./shared.js');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
 
