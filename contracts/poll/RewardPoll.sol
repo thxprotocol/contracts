@@ -39,8 +39,8 @@ contract RewardPoll is BasePoll, Roles {
         address _poolAddress,
         uint256 _minTokensPerc
     ) public BasePoll(_tokenAddress, _poolAddress, now, now + _duration, false) {
-        require(_amount > 0, 'amount is not larger than zero');
-        require(address(_beneficiary) != address(0), 'not a valid address');
+        require(_amount > 0, 'IS_NOT_GREATER_THAN');
+        require(address(_beneficiary) != address(0), 'IS_NOT_VALID_ADDRESS');
 
         beneficiary = _beneficiary;
         amount = _amount;
@@ -54,9 +54,9 @@ contract RewardPoll is BasePoll, Roles {
     function withdraw() public {
         uint256 poolBalance = token.balanceOf(address(pool));
 
-        require(state == RewardState.Approved, 'reward is not approved');
-        require(msg.sender == beneficiary, 'claimer is not the beneficiary');
-        require(poolBalance >= amount, 'pool balance is not sufficient');
+        require(state == RewardState.Approved, 'IS_NOT_APPROVED');
+        require(msg.sender == beneficiary, 'IS_NOT_BENEFICIARY');
+        require(poolBalance >= amount, 'INSUFFICIENT_BALANCE');
 
         state = RewardState.Withdrawn;
 

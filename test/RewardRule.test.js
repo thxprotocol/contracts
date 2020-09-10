@@ -137,9 +137,7 @@ describe('Reward Rules', function () {
 
     it('can vote for a rule proposal', async () => vote(poll, true));
 
-    it('can travel ' + REWARD_RULE_POLL_DURATION + '180s in time', async () =>
-        timeTravel(REWARD_RULE_POLL_DURATION / 60),
-    );
+    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
 
     it('can finalize the reward rule poll', async () => finalize(poll));
 

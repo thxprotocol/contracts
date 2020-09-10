@@ -35,12 +35,12 @@ contract BasePoll {
     mapping(address => Vote) public votesByAddress;
 
     modifier checkTime() {
-        require(now >= startTime && now <= endTime, 'is not within time constraints');
+        require(now >= startTime && now <= endTime, 'IS_NO_VALID_TIME');
         _;
     }
 
     modifier notFinalized() {
-        require(!finalized, 'is finalized');
+        require(!finalized, 'IS_FINALIZED');
         _;
     }
 
@@ -59,9 +59,9 @@ contract BasePoll {
         uint256 _endTime,
         bool _checkTransfersAfterEnd
     ) public {
-        require(_tokenAddress != address(0), 'tokenAddress is not a valid address');
-        require(_poolAddress != address(0), 'poolAddress is not a valid address');
-        require(_startTime >= now && _endTime > _startTime, 'is not a valid time constraint');
+        require(_tokenAddress != address(0), 'IS_NOT_VALID_ADDRESS');
+        require(_poolAddress != address(0), 'IS_NOT_VALID_ADDRESS');
+        require(_startTime >= now && _endTime > _startTime, 'IS_NO_VALID_TIME');
 
         token = IERC20(_tokenAddress);
         pool = IRewardPool(_poolAddress);
@@ -78,8 +78,8 @@ contract BasePoll {
      * @param agree True if user endorses the proposal else False
      */
     function vote(address voter, bool agree) external checkTime {
-        require(voter != address(0), 'is not a valid address');
-        require(votesByAddress[voter].time == 0, 'has already voted');
+        require(voter != address(0), 'IS_NOT_VALID_ADDRESS');
+        require(votesByAddress[voter].time == 0, 'HAS_VOTED');
 
         uint256 voiceWeight = token.balanceOf(voter);
         uint256 maxVoiceWeight = token.totalSupply().div(MAX_TOKENS_WEIGHT_DENOM);
@@ -103,7 +103,7 @@ contract BasePoll {
      * @param voter The address of the user voting
      */
     function revokeVote(address voter) external checkTime {
-        require(votesByAddress[voter].time > 0, 'has not voted');
+        require(votesByAddress[voter].time > 0, 'HAS_NOT_VOTED');
 
         uint256 voiceWeight = votesByAddress[voter].weight;
         bool agree = votesByAddress[voter].agree;
@@ -125,7 +125,7 @@ contract BasePoll {
      *
      */
     function onTokenTransfer(address tokenHolder, uint256 amount) public {
-        require(msg.sender == address(pool), 'caller is not the reward pool');
+        require(msg.sender == address(pool), 'IS_NOT_REWARD_POOL');
         if (votesByAddress[tokenHolder].time == 0) {
             return;
         }
