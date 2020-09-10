@@ -127,8 +127,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the deposit
      */
     function deposit(uint256 _amount) public onlyMember {
-        require(_amount > 0, 'amount can not be 0 or negative');
-        require(token.balanceOf(msg.sender) >= _amount, 'sender has not enough tokens');
+        require(_amount > 0, 'IS_NEGATIVE');
+        require(token.balanceOf(msg.sender) >= _amount, 'INSUFFICIENT_BALANCE');
 
         token.transferFrom(msg.sender, address(this), _amount);
 
@@ -149,7 +149,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _duration Duration in seconds
      */
     function setRewardPollDuration(uint256 _duration) public {
-        require(msg.sender == owner(), 'caller is not owner');
+        require(msg.sender == owner(), 'IS_NOT_OWNER');
 
         rewardPollDuration = _duration;
     }
@@ -169,9 +169,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _minTokensPerc Minimum tokens percentage to use for reward rule polls
      */
     function setMinRewardRulePollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'caller is not owner');
-        require(_minTokensPerc >= 0, 'perc is less than 0');
-        require(_minTokensPerc <= 100, 'perc is larger than 100');
+        require(msg.sender == owner(), 'IS_NOT_OWNER');
+        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
+        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
 
         minRewardRulePollTokensPerc = _minTokensPerc;
     }
@@ -181,9 +181,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _minTokensPerc Minimum tokens percentage to use for reward polls
      */
     function setMinRewardPollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'caller is not owner');
-        require(_minTokensPerc >= 0, 'perc is less than 0');
-        require(_minTokensPerc <= 100, 'perc is larger than 100');
+        require(msg.sender == owner(), 'IS_NOT_OWNER');
+        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
+        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
 
         minRewardPollTokensPerc = _minTokensPerc;
     }
@@ -193,8 +193,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Initial size for the reward rule.
      */
     function addRewardRule(uint256 _amount) public {
-        require(msg.sender == owner(), 'caller is not owner');
-        require(_amount >= 0, 'amount can not be negative');
+        require(msg.sender == owner(), 'IS_NOT_OWNER');
+        require(_amount >= 0, 'IS_NEGATIVE');
 
         RewardRule memory rule;
 
@@ -213,10 +213,10 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount New size for the reward rule.
      */
     function updateRewardRule(uint256 _id, uint256 _amount) public {
-        require(rewardRules[_id].poll.finalized(), 'another poll is running');
-        require(isMember(msg.sender), 'caller is not a member');
-        require(_amount >= 0, 'amount can not be negative');
-        require(_amount != rewardRules[_id].amount, 'proposed amount is equal to the current amount');
+        require(rewardRules[_id].poll.finalized(), 'IS_NOT_FINALIZED');
+        require(isMember(msg.sender), 'IS_NOT_MEMBER');
+        require(_amount >= 0, 'IS_NEGATIVE');
+        require(_amount != rewardRules[_id].amount, 'IS_EQUAL');
 
         rewardRules[_id].poll = _createRewardRulePoll(_id, _amount);
     }
@@ -226,7 +226,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _id Reference id of the rule
      */
     function claimReward(uint256 _id) public onlyMember {
-        require(rewardRules[_id].state == RewardRuleState.Enabled, 'rule is not enabled');
+        require(rewardRules[_id].state == RewardRuleState.Enabled, 'IS_NOT_ENABLED');
 
         RewardPoll reward = _createRewardPoll(rewardRules[_id].amount, msg.sender);
 
@@ -240,8 +240,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _beneficiary Address of the beneficiary
      */
     function proposeReward(uint256 _amount, address _beneficiary) public {
-        require(isMember(_beneficiary), 'beneficiary is not a member');
-        require(_amount > 0, 'amount can not be negative');
+        require(isMember(_beneficiary), 'IS_NOT_MEMBER');
+        require(_amount > 0, 'IS_NEGATIVE');
 
         RewardPoll reward = _createRewardPoll(_amount, _beneficiary);
 
