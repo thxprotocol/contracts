@@ -1,11 +1,9 @@
 const { time } = require('@openzeppelin/test-helpers');
 const { accounts } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
-
 const [from] = accounts;
 
 module.exports = {
-    GATEWAY: '0xF19D543f5ca6974b8b9b39Fcb923286dE4e9D975',
     REWARD_RULE_POLL_DURATION: 180,
     REWARD_POLL_DURATION: 180,
     REWARD_RULE_AMOUNT: '50',
@@ -21,6 +19,7 @@ module.exports = {
         vote = await poll.votesByAddress(from);
 
         expect(vote.time.toNumber()).to.not.equal(0);
+        expect(vote.weight.toNumber()).to.equal(1);
     },
     timeTravel: async minutes => {
         const before = (await time.latest()).toNumber();

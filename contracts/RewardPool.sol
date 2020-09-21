@@ -40,10 +40,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     RewardPoll[] public rewards;
     Deposit[] public deposits;
 
-    uint256 public rewardPollDuration;
-    uint256 public rewardRulePollDuration;
-    uint256 public minRewardRulePollTokensPerc;
-    uint256 public minRewardPollTokensPerc;
+    uint256 public rewardPollDuration = 0;
+    uint256 public rewardRulePollDuration = 0;
 
     mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawalsOf;
@@ -123,25 +121,24 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Store a deposit in the contract
+     * @dev Store a deposit in the contract. The tx should be approved prior to calling this method.
      * @param _amount Size of the deposit
      */
     function deposit(uint256 _amount) public onlyMember {
-        require(_amount > 0, 'IS_NEGATIVE');
-        require(token.balanceOf(msg.sender) >= _amount, 'INSUFFICIENT_BALANCE');
+        require(token.balanceOf(_msgSender()) >= _amount, 'INSUFFICIENT_BALANCE');
 
-        token.transferFrom(msg.sender, address(this), _amount);
+        token.transferFrom(_msgSender(), address(this), _amount);
 
         Deposit memory d;
 
         d.amount = _amount;
-        d.member = msg.sender;
+        d.member = _msgSender();
         d.timestamp = now;
 
         deposits.push(d);
-        depositsOf[msg.sender].push(d);
+        depositsOf[_msgSender()].push(d);
 
-        emit Deposited(msg.sender, _amount);
+        emit Deposited(_msgSender(), _amount);
     }
 
     /**
@@ -149,7 +146,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _duration Duration in seconds
      */
     function setRewardPollDuration(uint256 _duration) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
+        require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
         rewardPollDuration = _duration;
     }
@@ -159,33 +156,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _duration Duration in seconds
      */
     function setRewardRulePollDuration(uint256 _duration) public {
-        require(msg.sender == owner(), 'caller is not owner');
+        require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
         rewardRulePollDuration = _duration;
-    }
-
-    /**
-     * @dev Set the vote treshold for reward rule polls
-     * @param _minTokensPerc Minimum tokens percentage to use for reward rule polls
-     */
-    function setMinRewardRulePollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
-        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
-        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
-
-        minRewardRulePollTokensPerc = _minTokensPerc;
-    }
-
-    /**
-     * @dev Set the vote treshold for reward polls
-     * @param _minTokensPerc Minimum tokens percentage to use for reward polls
-     */
-    function setMinRewardPollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
-        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
-        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
-
-        minRewardPollTokensPerc = _minTokensPerc;
     }
 
     /**
@@ -193,8 +166,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Initial size for the reward rule.
      */
     function addRewardRule(uint256 _amount) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
-        require(_amount >= 0, 'IS_NEGATIVE');
+        require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
         RewardRule memory rule;
 
@@ -214,7 +186,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function updateRewardRule(uint256 _id, uint256 _amount) public {
         require(rewardRules[_id].poll.finalized(), 'IS_NOT_FINALIZED');
-        require(isMember(msg.sender), 'IS_NOT_MEMBER');
+        require(isMember(_msgSender()), 'IS_NOT_MEMBER');
         require(_amount >= 0, 'IS_NEGATIVE');
         require(_amount != rewardRules[_id].amount, 'IS_EQUAL');
 
@@ -228,10 +200,10 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     function claimReward(uint256 _id) public onlyMember {
         require(rewardRules[_id].state == RewardRuleState.Enabled, 'IS_NOT_ENABLED');
 
-        RewardPoll reward = _createRewardPoll(rewardRules[_id].amount, msg.sender);
+        RewardPoll reward = _createRewardPoll(rewardRules[_id].amount, _msgSender());
 
         rewards.push(reward);
-        rewardsOf[msg.sender].push(reward);
+        rewardsOf[_msgSender()].push(reward);
     }
 
     /**
@@ -241,10 +213,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function proposeReward(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
-        require(_amount > 0, 'IS_NEGATIVE');
-
         RewardPoll reward = _createRewardPoll(_amount, _beneficiary);
-
         rewards.push(reward);
         rewardsOf[_beneficiary].push(reward);
     }
@@ -255,14 +224,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _beneficiary Address of the receiver of the reward
      */
     function _createRewardPoll(uint256 _amount, address _beneficiary) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(
-            _beneficiary,
-            _amount,
-            rewardPollDuration,
-            address(token),
-            address(this),
-            minRewardPollTokensPerc
-        );
+        RewardPoll poll = new RewardPoll(_beneficiary, _amount, rewardPollDuration, address(this), address(token));
 
         emit RewardPollCreated(address(poll));
 
@@ -275,16 +237,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      */
     function _createRewardRulePoll(uint256 _id, uint256 _amount) internal returns (RewardRulePoll) {
-        RewardRulePoll poll = new RewardRulePoll(
-            _id,
-            _amount,
-            rewardRulePollDuration,
-            address(token),
-            address(this),
-            minRewardRulePollTokensPerc
-        );
+        RewardRulePoll poll = new RewardRulePoll(_id, _amount, rewardRulePollDuration, address(this));
 
-        emit RewardRulePollCreated(_id, _amount, msg.sender);
+        emit RewardRulePollCreated(_id, _amount, _msgSender());
 
         return poll;
     }

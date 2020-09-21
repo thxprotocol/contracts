@@ -4,7 +4,6 @@
 pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
 
 import '../IRewardPool.sol';
 
@@ -17,20 +16,16 @@ contract BasePoll {
         bool agree;
     }
 
-    uint256 public constant MAX_TOKENS_WEIGHT_DENOM = 1000;
-
-    IERC20 public token;
     IRewardPool public pool;
 
     uint256 public startTime;
     uint256 public endTime;
-    bool checkTransfersAfterEnd;
 
     uint256 public yesCounter = 0;
     uint256 public noCounter = 0;
     uint256 public totalVoted = 0;
 
-    bool public finalized;
+    bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
 
@@ -46,30 +41,22 @@ contract BasePoll {
 
     /**
      * @dev BasePoll Constructor
-     * @param _tokenAddress ERC20 compatible token contract address
      * @param _poolAddress Reward Pool contract address
      * @param _startTime Poll start time
      * @param _endTime Poll end time
-     * @param _checkTransfersAfterEnd Checks transfer after end
      */
     constructor(
-        address _tokenAddress,
         address _poolAddress,
         uint256 _startTime,
-        uint256 _endTime,
-        bool _checkTransfersAfterEnd
+        uint256 _endTime
     ) public {
-        require(_tokenAddress != address(0), 'IS_NOT_VALID_ADDRESS');
-        require(_poolAddress != address(0), 'IS_NOT_VALID_ADDRESS');
+        require(_poolAddress != address(0), 'IS_INVALID_ADDRESS');
         require(_startTime >= now && _endTime > _startTime, 'IS_NO_VALID_TIME');
 
-        token = IERC20(_tokenAddress);
         pool = IRewardPool(_poolAddress);
 
         startTime = _startTime;
         endTime = _endTime;
-        finalized = false;
-        checkTransfersAfterEnd = _checkTransfersAfterEnd;
     }
 
     /**
@@ -78,12 +65,10 @@ contract BasePoll {
      * @param agree True if user endorses the proposal else False
      */
     function vote(address voter, bool agree) external checkTime {
-        require(voter != address(0), 'IS_NOT_VALID_ADDRESS');
+        require(voter != address(0), 'IS_INVALID_ADDRESS');
         require(votesByAddress[voter].time == 0, 'HAS_VOTED');
 
-        uint256 voiceWeight = token.balanceOf(voter);
-        uint256 maxVoiceWeight = token.totalSupply().div(MAX_TOKENS_WEIGHT_DENOM);
-        voiceWeight = voiceWeight <= maxVoiceWeight ? voiceWeight : maxVoiceWeight;
+        uint256 voiceWeight = 1;
 
         if (agree) {
             yesCounter = yesCounter.add(voiceWeight);
@@ -118,37 +103,6 @@ contract BasePoll {
         } else {
             noCounter = noCounter.sub(voiceWeight);
         }
-    }
-
-    /**
-     * @dev Function is called after token transfer from user`s wallet to check and correct user`s vote
-     *
-     */
-    function onTokenTransfer(address tokenHolder, uint256 amount) public {
-        require(msg.sender == address(pool), 'IS_NOT_REWARD_POOL');
-        if (votesByAddress[tokenHolder].time == 0) {
-            return;
-        }
-        if (!checkTransfersAfterEnd) {
-            if (finalized || (now < startTime || now > endTime)) {
-                return;
-            }
-        }
-
-        if (token.balanceOf(tokenHolder) >= votesByAddress[tokenHolder].weight) {
-            return;
-        }
-        uint256 voiceWeight = amount;
-        if (amount > votesByAddress[tokenHolder].weight) {
-            voiceWeight = votesByAddress[tokenHolder].weight;
-        }
-
-        if (votesByAddress[tokenHolder].agree) {
-            yesCounter = yesCounter.sub(voiceWeight);
-        } else {
-            noCounter = noCounter.sub(voiceWeight);
-        }
-        votesByAddress[tokenHolder].weight = votesByAddress[tokenHolder].weight.sub(voiceWeight);
     }
 
     /**
