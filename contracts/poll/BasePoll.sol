@@ -25,6 +25,7 @@ contract BasePoll {
     uint256 public noCounter = 0;
     uint256 public totalVoted = 0;
 
+    bool public bypassVotes = true;
     bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
@@ -51,12 +52,16 @@ contract BasePoll {
         uint256 _endTime
     ) public {
         require(_poolAddress != address(0), 'IS_INVALID_ADDRESS');
-        require(_startTime >= now && _endTime > _startTime, 'IS_NO_VALID_TIME');
+        require(_startTime >= now, 'IS_NO_VALID_TIME');
 
         pool = IRewardPool(_poolAddress);
 
         startTime = _startTime;
         endTime = _endTime;
+
+        if (_startTime == _endTime) {
+            bypassVotes = true;
+        }
     }
 
     /**
@@ -109,7 +114,7 @@ contract BasePoll {
      * Finalize poll and call onPollFinish callback with result
      */
     function tryToFinalize() public notFinalized returns (bool) {
-        if (now < endTime) {
+        if (now < endTime && bypassVotes == false) {
             return false;
         }
         finalized = true;
@@ -122,7 +127,7 @@ contract BasePoll {
     }
 
     function isSubjectApproved() internal virtual view returns (bool) {
-        return yesCounter > noCounter;
+        return yesCounter > noCounter || bypassVotes == true;
     }
 
     /**
