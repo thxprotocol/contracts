@@ -4,9 +4,9 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "yarn compile; npx mocha --recursive --exit",
+        "test": "npm run compile; npx mocha --recursive --exit",
         "compile": "npx oz compile --optimizer on",
-        "serve": "node index.js"
+        "serve": "npm run compile; node index.js"
     },
     "author": "",
     "license": "ISC",

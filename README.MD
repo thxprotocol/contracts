@@ -1,10 +1,8 @@
 # THX - Reward Pool
 
-## Abstract
+This repository holds the smart contracts used within the THX ecosystem. This document should provide more information about the configuration and governance of a reward pool. It also lists the tests for features in the contracts, explains the upgradability and references to the implemented Open Zeppelin standard contracts.
 
-This repository holds the smart contracts used by THX Wallet. This document outlines the models used in the contract layer and describes the data that is stored. For a detailed explanation of the workings you should dive into the code and read the documentation for the methods.
-
-## Features
+## Contract Tests
 
 -   [x] Make a deposit
 -   [x] Claim a reward
@@ -20,56 +18,70 @@ This repository holds the smart contracts used by THX Wallet. This document outl
 -   [x] Add a manager
 -   [x] Revoke manager role
 
-## Data Storage
-
-This section documents user data that is stored in the smart contracts on the loom network and should clarify why it needs to be stored.
-
 ## Events
 
 ```
-event Withdrawn(address indexed beneficiary, uint256 reward)
+event Withdrawn(address indexed beneficiary, uint256 reward);
+event Deposited(address indexed sender, uint256 amount);
+event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
+event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
+event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
+event RewardPollCreated(address reward);
+event RewardPollFinished(address reward, bool agree);
 ```
 
-```
-event RewardRulePollCreated(uint256 id, uint256 proposal, address sender)
-```
+## Configuration
+
+-   rewardPollDuration (default set to `0`)
+-   rewardRulePollDuration (default set to `0`)
+
+## Governance
+
+Two types of polls are extended from the BasePoll contract. The polls are used to change rewardRule sizes and approve reward proposals and claims.
+
+### Reward Rule Poll
+
+An account with the `MEMBER_ROLE` can cast a vote and the default `vote.weight` will be `1`. When the member revokes its vote `vote.time` will be set to `0`.
+
+### Reward Poll
+
+An account with the `MANAGER_ROLE` can cast a vote and the default `vote.weight` will be `1`. When the member revokes its vote `vote.time` will be set to `0`.
+
+## Upgrades
+
+Make sure to have a local RPC running at `http://localhost:7545` and run `yarn serve` to execute the upgrade test script as found in the index.js file. This will display logs while updating an instance of the Reward Pool contract. Make sure to duplicate the RewardPool contract and alter the `setRewardPollDuration()` method as proposed in the comments of the test script.
 
 ```
-event RewardRulePoll
+// Make a change in the RewardPool contract logic (multiply the value of
+// setRewardPollDuration method by 2), change the contract name to
+// RewardPoolV2 and compile it.
 ```
 
-```
-event RewardRuleUpdated(uint256 id, RuleState state, uint256 amount)
-```
+Output should be something like this:
 
 ```
-event RewardRulePollFinished(uint256 id, uint256 amount)
+Reward Pool Admin Project is created
+Reward Pool Proxy is created
+Reward Pool Proxy receives 5000
+Set rewardPollDuration to 180
+Adds member 0x5e0603a66bD209F13477C113dfd95B839026a2b2
+A reward is proposed for 0x5e0603a66bD209F13477C113dfd95B839026a2b2 by 0xBBcCe83aa099217467E4589b553E268d50bcf2Ac
+====== START PROXY LOG ======
+* Reward Pool proxy address:  0x0B12C6d2C604AeF4c6148E755D53933e53d893E3
+* Reward Pool implementation address: 0x11e319b4815516101f62ed059a24a83a614629dc
+* Reward Pool reward poll duration:  180
+* Reward Pool has stored reward:  0xda3a2b84C168a329e2ed1d491568990d56d540d9
+====== END PROXY LOG ======
+Reward Pool Contract is being upgraded...
+Reward Pool Contract is upgraded successfully!
+Set rewardPollDuration to 180
+====== START PROXY LOG ======
+* Reward Pool (Upgraded) proxy address:  0x0B12C6d2C604AeF4c6148E755D53933e53d893E3
+* Reward Pool (Upgraded) implementation address: 0x68be83c7aac0813684ac8b898385fbb2e3edaf1b
+* Reward Pool (Upgraded) reward poll duration:  360
+* Reward Pool (Upgraded) has stored reward:  0xda3a2b84C168a329e2ed1d491568990d56d540d9
+====== END PROXY LOG ======
 ```
-
-```
-event RewardPollFinished(address reward, bool agree)
-```
-
-_More should be added to this list..._
-
-## Methods
-
-```
-// Initializes the reward pool and sets the owner. Called when contract upgrades are available.
-function initialize(address _owner, address _tokenAddress) public initializer
-```
-
-```
-// Set the duration for a reward poll.
-function setRewardPollDuration(uint256 _duration) public
-```
-
-```
-// Set the duration for a reward poll.upgrades are available.
-function setRewardPollDuration(uint256 _duration) public
-```
-
-_More should be added to this list..._
 
 ## OpenZeppelin
 
