@@ -42,14 +42,6 @@ describe('Reward Rules', function() {
         },
     );
 
-    it('can set the reward rule poll min tokens percentage to 0', async function() {
-        await pool.setMinRewardRulePollTokensPerc(0, { from });
-
-        const minTokensPerc = await pool.minRewardRulePollTokensPerc();
-
-        expect(parseInt(minTokensPerc, 10)).to.equal(0);
-    });
-
     it('can not create a reward rule when I am not a member', async function() {
         try {
             await pool.addRewardRule({ from: accounts[1] });

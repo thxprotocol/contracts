@@ -40,10 +40,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     RewardPoll[] public rewards;
     Deposit[] public deposits;
 
-    uint256 public rewardPollDuration;
-    uint256 public rewardRulePollDuration;
-    uint256 public minRewardRulePollTokensPerc;
-    uint256 public minRewardPollTokensPerc;
+    uint256 public rewardPollDuration = 0;
+    uint256 public rewardRulePollDuration = 0;
 
     mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawalsOf;
@@ -123,7 +121,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Store a deposit in the contract
+     * @dev Store a deposit in the contract. The tx should be approved prior to calling this method.
      * @param _amount Size of the deposit
      */
     function deposit(uint256 _amount) public onlyMember {
@@ -162,30 +160,6 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         require(msg.sender == owner(), 'caller is not owner');
 
         rewardRulePollDuration = _duration;
-    }
-
-    /**
-     * @dev Set the vote treshold for reward rule polls
-     * @param _minTokensPerc Minimum tokens percentage to use for reward rule polls
-     */
-    function setMinRewardRulePollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
-        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
-        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
-
-        minRewardRulePollTokensPerc = _minTokensPerc;
-    }
-
-    /**
-     * @dev Set the vote treshold for reward polls
-     * @param _minTokensPerc Minimum tokens percentage to use for reward polls
-     */
-    function setMinRewardPollTokensPerc(uint256 _minTokensPerc) public {
-        require(msg.sender == owner(), 'IS_NOT_OWNER');
-        require(_minTokensPerc >= 0, 'IS_TOO_LITTLE');
-        require(_minTokensPerc <= 100, 'IS_TOO_LARGE');
-
-        minRewardPollTokensPerc = _minTokensPerc;
     }
 
     /**
@@ -255,14 +229,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _beneficiary Address of the receiver of the reward
      */
     function _createRewardPoll(uint256 _amount, address _beneficiary) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(
-            _beneficiary,
-            _amount,
-            rewardPollDuration,
-            address(token),
-            address(this),
-            minRewardPollTokensPerc
-        );
+        RewardPoll poll = new RewardPoll(_beneficiary, _amount, rewardPollDuration, address(this), address(token));
 
         emit RewardPollCreated(address(poll));
 
@@ -275,14 +242,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      */
     function _createRewardRulePoll(uint256 _id, uint256 _amount) internal returns (RewardRulePoll) {
-        RewardRulePoll poll = new RewardRulePoll(
-            _id,
-            _amount,
-            rewardRulePollDuration,
-            address(token),
-            address(this),
-            minRewardRulePollTokensPerc
-        );
+        RewardRulePoll poll = new RewardRulePoll(_id, _amount, rewardRulePollDuration, address(this));
 
         emit RewardRulePollCreated(_id, _amount, msg.sender);
 

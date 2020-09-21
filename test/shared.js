@@ -19,6 +19,7 @@ module.exports = {
         vote = await poll.votesByAddress(from);
 
         expect(vote.time.toNumber()).to.not.equal(0);
+        expect(vote.weight.toNumber()).to.equal(1);
     },
     timeTravel: async minutes => {
         const before = (await time.latest()).toNumber();

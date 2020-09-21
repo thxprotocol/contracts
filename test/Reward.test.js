@@ -116,15 +116,15 @@ describe('Reward', function() {
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
-        const oldFromBalance = await token.balanceOf(from);
+        const oldBeneficiaryBalance = await token.balanceOf(from);
         const oldRewardPoolBalance = await token.balanceOf(pool.address);
 
         await reward.withdraw({ from });
 
-        const newFromBalance = await token.balanceOf(from);
+        const newBeneficiaryBalance = await token.balanceOf(from);
         const newRewardPoolBalance = await token.balanceOf(pool.address);
 
-        expect(parseInt(newRewardPoolBalance, 10)).to.be.lessThan(parseInt(oldRewardPoolBalance, 10));
-        expect(parseInt(newFromBalance, 10)).to.be.greaterThan(parseInt(oldFromBalance, 10));
+        expect(parseInt(newRewardPoolBalance, 10)).to.lessThan(parseInt(oldRewardPoolBalance, 10));
+        expect(parseInt(newBeneficiaryBalance, 10)).to.greaterThan(parseInt(oldBeneficiaryBalance, 10));
     });
 });
