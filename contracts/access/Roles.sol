@@ -46,7 +46,7 @@ contract Roles is AccessControlUpgradeSafe {
     }
 
     /**
-     * @dev Grants manager role and adds address to manager list
+     * @dev Grants member role and adds address to member list
      * @param _account A valid address
      */
     function addMember(address _account) public onlyMember {

@@ -47,7 +47,7 @@ contract RewardPoll is BasePoll, Roles {
      */
     function withdraw() public {
         require(state == RewardState.Approved, 'IS_NOT_APPROVED');
-        require(msg.sender == beneficiary, 'IS_NOT_BENEFICIARY');
+        require(_msgSender() == beneficiary, 'IS_NOT_BENEFICIARY');
         require(token.balanceOf(address(pool)) >= amount, 'INSUFFICIENT_BALANCE');
 
         state = RewardState.Withdrawn;

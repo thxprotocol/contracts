@@ -14,9 +14,6 @@ describe('Roles', function() {
         pool = await RewardPool.new({ from });
 
         await pool.initialize(from, token.address);
-
-        await pool.addMember(from, { from });
-        await pool.addManager(from, { from });
     });
 
     it('can verify account to be a member', async function() {
