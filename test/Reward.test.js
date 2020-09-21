@@ -1,7 +1,6 @@
 const { expect } = require('chai');
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
-    GATEWAY,
     REWARD_RULE_POLL_DURATION,
     REWARD_POLL_DURATION,
     REWARD_RULE_AMOUNT,
@@ -25,7 +24,7 @@ describe('Reward', function() {
     before(async () => {
         const amount = web3.utils.toWei('1000');
 
-        token = await THXToken.new(GATEWAY, from, { from });
+        token = await THXToken.new({ from });
         pool = await RewardPool.new({ from });
 
         await pool.initialize(from, token.address, { from });
