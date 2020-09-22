@@ -33,6 +33,8 @@ contract RewardPoll is BasePoll, Roles {
         uint256 _duration,
         address _poolAddress,
         address _tokenAddress
+    // warning: the length of the poll is dependent on the time the block is mined.
+    // could lead to unexpected business logic.
     ) public BasePoll(_poolAddress, now, now + _duration) {
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
@@ -48,6 +50,8 @@ contract RewardPoll is BasePoll, Roles {
     function withdraw() public {
         require(state == RewardState.Approved, 'IS_NOT_APPROVED');
         require(_msgSender() == beneficiary, 'IS_NOT_BENEFICIARY');
+        // check below could be deleted to save gast costs, as onWithdrawal will fail
+        // if the balance is insufficient.
         require(token.balanceOf(address(pool)) >= amount, 'INSUFFICIENT_BALANCE');
 
         state = RewardState.Withdrawn;

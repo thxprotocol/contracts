@@ -122,6 +122,7 @@ contract BasePoll {
         return true;
     }
 
+    // why are there 2 view methods with the same return value?
     function isNowApproved() public view returns (bool) {
         return isSubjectApproved();
     }

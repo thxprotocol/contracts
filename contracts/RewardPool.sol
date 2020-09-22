@@ -9,7 +9,6 @@ import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
 
 import './access/Roles.sol';
-import './poll/BasePoll.sol';
 import './poll/RewardPoll.sol';
 import './poll/RewardRulePoll.sol';
 
