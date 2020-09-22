@@ -12,17 +12,17 @@ import '../access/Roles.sol';
 contract WithdrawPoll is BasePoll, Roles {
     using SafeMath for uint256;
 
-    enum RewardState { Pending, Approved, Rejected, Withdrawn }
+    enum WithdrawState { Pending, Approved, Rejected, Withdrawn }
 
     address public beneficiary;
     uint256 public amount;
     IERC20 public token;
-    RewardState public state;
+    WithdrawState public state;
 
     /**
      * @dev WithdrawPoll Constructor
-     * @param _beneficiary Beneficiary of the reward
-     * @param _amount Size of the reward
+     * @param _beneficiary Beneficiary of the withdrawal
+     * @param _amount Size of the withdrawal
      * @param _duration Poll duration
      * @param _poolAddress Asset Pool contract address
      * @param _tokenAddress ERC20 compatible token contract address
@@ -41,20 +41,20 @@ contract WithdrawPoll is BasePoll, Roles {
         beneficiary = _beneficiary;
         amount = _amount;
         token = IERC20(_tokenAddress);
-        state = RewardState.Pending;
+        state = WithdrawState.Pending;
     }
 
     /**
      * @dev Withdraw accumulated balance for a beneficiary.
      */
     function withdraw() public {
-        require(state == RewardState.Approved, 'IS_NOT_APPROVED');
+        require(state == WithdrawState.Approved, 'IS_NOT_APPROVED');
         require(_msgSender() == beneficiary, 'IS_NOT_BENEFICIARY');
         // check below could be deleted to save gast costs, as onWithdrawal will fail
         // if the balance is insufficient.
         require(token.balanceOf(address(pool)) >= amount, 'INSUFFICIENT_BALANCE');
 
-        state = RewardState.Withdrawn;
+        state = WithdrawState.Withdrawn;
 
         pool.onWithdrawal(address(this), beneficiary, amount);
     }
@@ -64,9 +64,9 @@ contract WithdrawPoll is BasePoll, Roles {
      */
     function onPollFinish(bool agree) internal override {
         if (agree && finalized) {
-            state = RewardState.Approved;
+            state = WithdrawState.Approved;
         } else {
-            state = RewardState.Rejected;
+            state = WithdrawState.Rejected;
         }
 
         pool.onWithdrawPollFinish(address(this), agree);
