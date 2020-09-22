@@ -66,9 +66,9 @@ describe('Reward Rules', function() {
 
         expect(poll.address).to.equal(rule.poll);
 
-        const proposal = await poll.proposal();
+        const amount = await poll.amount();
 
-        expect(parseInt(proposal, 10)).to.equal(50);
+        expect(parseInt(amount, 10)).to.equal(50);
     });
 
     it('can vote for a rule proposal', async () => vote(poll, true));

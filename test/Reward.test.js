@@ -77,8 +77,8 @@ describe('Reward with voting', function() {
 
         expect(poll.address).to.equal(rule.poll);
 
-        const proposal = await poll.proposal();
-        const amount = web3.utils.fromWei(proposal);
+        let amount = await poll.amount();
+        amount = web3.utils.fromWei(amount);
 
         expect(amount).to.equal('50');
     });
@@ -189,9 +189,9 @@ describe('Reward without voting', function() {
 
         expect(poll.address).to.equal(rule.poll);
 
-        const proposal = await poll.proposal();
+        const amount = await poll.amount();
 
-        expect(web3.utils.fromWei(proposal)).to.equal('50');
+        expect(web3.utils.fromWei(amount)).to.equal('50');
     });
 
     it('can finalize the reward rule poll', async () => finalize(poll));
