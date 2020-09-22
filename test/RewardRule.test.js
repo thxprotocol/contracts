@@ -2,7 +2,7 @@ const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
-const { REWARD_RULE_POLL_DURATION, vote, timeTravel, finalize } = require('./shared.js');
+const { REWARD_POLL_DURATION, vote, timeTravel, finalize } = require('./shared.js');
 
 let token = null;
 let pool = null;
@@ -32,13 +32,13 @@ describe('Rewards', function() {
     });
 
     it(
-        'can set the reward poll duration to ' + REWARD_RULE_POLL_DURATION + ' seconds (3 minutes)',
+        'can set the reward poll duration to ' + REWARD_POLL_DURATION + ' seconds (3 minutes)',
         async function() {
-            await pool.setRewardPollDuration(REWARD_RULE_POLL_DURATION, { from });
+            await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
 
             const duration = await pool.rewardPollDuration();
 
-            expect(parseInt(duration, 10)).to.equal(REWARD_RULE_POLL_DURATION);
+            expect(parseInt(duration, 10)).to.equal(REWARD_POLL_DURATION);
         },
     );
 
@@ -73,7 +73,7 @@ describe('Rewards', function() {
 
     it('can vote for a reward proposal', async () => vote(poll, true));
 
-    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
+    it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
     it('can finalize the reward reward poll', async () => finalize(poll));
 
@@ -98,7 +98,7 @@ describe('Rewards', function() {
 
     it('can vote for a proposal', async () => vote(poll, true));
 
-    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
+    it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
     it('can finalize the reward poll', async () => finalize(poll));
 
@@ -123,7 +123,7 @@ describe('Rewards', function() {
 
     it('can vote for a proposal', async () => vote(poll, true));
 
-    it('can travel ' + REWARD_RULE_POLL_DURATION + 's in time', async () => timeTravel(REWARD_RULE_POLL_DURATION / 60));
+    it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
     it('can finalize the reward poll', async () => finalize(poll));
 

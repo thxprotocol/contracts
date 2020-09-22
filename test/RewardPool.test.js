@@ -1,6 +1,6 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
-const { vote, timeTravel, finalize, REWARD_POLL_DURATION } = require('./shared');
+const { vote, timeTravel, finalize, WITHDRAW_POLL_DURATION } = require('./shared');
 const THXToken = contract.fromArtifact('THXToken');
 const RewardPool = contract.fromArtifact('RewardPool');
 
@@ -45,12 +45,12 @@ describe('Reward Pool', function() {
         expect(parseInt(duration, 10)).to.equal(0);
     });
 
-    it('can set the reward poll duration to ' + REWARD_POLL_DURATION + ' seconds', async function() {
-        await pool.setWithdrawPollDuration(REWARD_POLL_DURATION, { from });
+    it('can set the reward poll duration to ' + WITHDRAW_POLL_DURATION + ' seconds', async function() {
+        await pool.setWithdrawPollDuration(WITHDRAW_POLL_DURATION, { from });
 
         const duration = await pool.withdrawPollDuration();
 
-        expect(duration.toNumber()).to.equal(REWARD_POLL_DURATION);
+        expect(duration.toNumber()).to.equal(WITHDRAW_POLL_DURATION);
     });
 
     it('can make ' + accounts[1] + 'a member', async function() {
@@ -81,7 +81,7 @@ describe('Reward Pool', function() {
         expect(reward.address).to.equal(rewardAddress);
     });
     it('can vote for a wtihdraw claim', async () => vote(reward, true));
-    it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
+    it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
         const oldBeneficiaryBalance = await token.balanceOf(accounts[1]);

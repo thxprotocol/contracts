@@ -4,9 +4,9 @@ const { expect } = require('chai');
 const [from] = accounts;
 
 module.exports = {
-    REWARD_RULE_POLL_DURATION: 180,
     REWARD_POLL_DURATION: 180,
-    REWARD_RULE_AMOUNT: '50',
+    WITHDRAW_POLL_DURATION: 180,
+    REWARD_AMOUNT: '50',
     DEPOSIT_AMOUNT: '1000',
     MINT_AMOUNT: '5000',
     vote: async (poll, agree) => {
