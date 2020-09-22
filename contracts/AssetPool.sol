@@ -82,14 +82,14 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Get the total amount of deposits in this pool
+     * @dev Get the total amount of withdraws in this pool
      */
     function getWithdrawCount() public view returns (uint256) {
         return withdraws.length;
     }
 
     /**
-     * @dev Get the total amount of deposits in this pool
+     * @dev Get the total amount of rewards in this pool
      */
     function getRewardCount() public view returns (uint256) {
         return rewards.length;
@@ -104,8 +104,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Get the amount of deposits for a given address
-     * @param _member Address of the sender of deposits
+     * @dev Get the amount of withdraws for a given address
+     * @param _member Address of the sender of withdraws
      */
     function getWithdrawalCount(address _member) public view returns (uint256) {
         return withdrawalsOf[_member].length;
@@ -179,7 +179,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Starts a reward poll
+     * @dev Updates a reward poll
      * @param _id References reward
      * @param _amount New size for the reward.
      */
@@ -192,7 +192,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Creates a withdraw claim for a reward.
+     * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
      */
     function claimWithdraw(uint256 _id) public onlyMember {
@@ -205,8 +205,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Creates a custom reward proposal.
-     * @param _amount Size of the reward
+     * @dev Creates a custom withdraw proposal.
+     * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary) public {
@@ -217,9 +217,9 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Starts a reward poll and stores the reward.
-     * @param _amount Size of the reward
-     * @param _beneficiary Address of the receiver of the reward
+     * @dev Starts a withdraw poll.
+     * @param _amount Size of the withdrawal
+     * @param _beneficiary Address of the receiver of the withdrawal
      */
     function _createWithdrawPoll(uint256 _amount, address _beneficiary) internal returns (WithdrawPoll) {
         WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, withdrawPollDuration, address(this), address(token));
@@ -244,11 +244,11 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev Called when poll is finished
-     * @param _reward Address of reward
+     * @param _withdraw Address of withdrawPoll
      * @param _agree Bool for checking the result of the poll
      */
-    function onWithdrawPollFinish(address _reward, bool _agree) external {
-        emit WithdrawPollFinished(_reward, _agree);
+    function onWithdrawPollFinish(address _withdraw, bool _agree) external {
+        emit WithdrawPollFinished(_withdraw, _agree);
     }
 
     /**
@@ -276,7 +276,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev callback called after reward is withdrawn
+     * @dev callback called after a withdraw
      * @param _reward Address of the reward
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
