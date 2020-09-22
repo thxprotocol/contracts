@@ -52,10 +52,10 @@ describe('Reward with voting', function() {
     });
 
     it('can configure the reward and reward rule poll durations', async function() {
-        await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
+        await pool.setWithdrawPollDuration(REWARD_POLL_DURATION, { from });
         await pool.setRewardRulePollDuration(REWARD_RULE_POLL_DURATION, { from });
 
-        expect(parseInt(await pool.rewardPollDuration(), 10)).to.equal(REWARD_POLL_DURATION);
+        expect(parseInt(await pool.withdrawPollDuration(), 10)).to.equal(REWARD_POLL_DURATION);
         expect(parseInt(await pool.rewardRulePollDuration(), 10)).to.equal(REWARD_RULE_POLL_DURATION);
     });
 
@@ -96,14 +96,14 @@ describe('Reward with voting', function() {
         expect(rule.state.toString()).to.equal('1');
     });
 
-    it('can claim a reward for rule 0', async function() {
+    it('can claim a withdraw for rule 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
 
-        await pool.claimReward(0, { from });
+        await pool.claimWithdraw(0, { from });
 
-        const rewardPollAddress = await pool.rewardsOf(from, 0, { from });
+        const withdrawPollAddress = await pool.rewardsOf(from, 0, { from });
 
-        reward = contract.fromArtifact('RewardPoll', rewardPollAddress);
+        reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
         const beneficiary = await reward.beneficiary();
         const amount = await reward.amount();
@@ -112,7 +112,7 @@ describe('Reward with voting', function() {
         expect(web3.utils.fromWei(amount)).to.equal(REWARD_RULE_AMOUNT);
     });
 
-    it('can vote for a reward claim', async () => vote(reward, true));
+    it('can vote for a withdraw claim', async () => vote(reward, true));
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
@@ -164,10 +164,10 @@ describe('Reward without voting', function() {
     });
 
     it('can configure the reward and reward rule poll durations', async function() {
-        await pool.setRewardPollDuration(0, { from });
+        await pool.setWithdrawPollDuration(0, { from });
         await pool.setRewardRulePollDuration(0, { from });
 
-        expect(parseInt(await pool.rewardPollDuration(), 10)).to.equal(0);
+        expect(parseInt(await pool.withdrawPollDuration(), 10)).to.equal(0);
         expect(parseInt(await pool.rewardRulePollDuration(), 10)).to.equal(0);
     });
 
@@ -203,14 +203,14 @@ describe('Reward without voting', function() {
         expect(rule.state.toString()).to.equal('1');
     });
 
-    it('can claim a reward for rule 0', async function() {
+    it('can claim a withdraw for rule 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
 
-        await pool.claimReward(0, { from });
+        await pool.claimWithdraw(0, { from });
 
-        const rewardPollAddress = await pool.rewardsOf(from, 0, { from });
+        const withdrawPollAddress = await pool.rewardsOf(from, 0, { from });
 
-        reward = contract.fromArtifact('RewardPoll', rewardPollAddress);
+        reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
         const beneficiary = await reward.beneficiary();
         const amount = await reward.amount();

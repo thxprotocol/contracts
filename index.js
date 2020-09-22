@@ -18,7 +18,7 @@ async function log(name, proxy) {
     console.log('====== START PROXY LOG ======');
     console.log(name, 'proxy address: ', proxy.options.address);
     console.log(name, 'implementation address:', await getImplementationAddress(proxy.options.address));
-    console.log(name, 'reward poll duration: ', await proxy.methods.rewardPollDuration().call());
+    console.log(name, 'reward poll duration: ', await proxy.methods.withdrawPollDuration().call());
     console.log(name, 'has stored reward: ', await proxy.methods.rewards(0).call());
     console.log('====== END PROXY LOG ======');
 }
@@ -56,7 +56,7 @@ async function upgradePool(accounts, project, instance) {
     const [from] = accounts;
 
     // Make a change in the RewardPool contract logic (multiply the value of
-    // setRewardPollDuration method by 2), change the contract name to
+    // setWithdrawPollDuration method by 2), change the contract name to
     // RewardPoolV2 and compile it.
     const PoolContractUpgraded = Contracts.getFromLocal('RewardPoolV2');
     console.log('Reward Pool Contract is being upgraded...');
@@ -79,20 +79,20 @@ async function run() {
     await token.methods.mint(instance.options.address, web3.utils.toWei('5000')).send(options);
     console.log('Reward Pool Proxy receives 5000');
 
-    await instance.methods.setRewardPollDuration(180).send(options);
-    console.log('Set rewardPollDuration to 180');
+    await instance.methods.setWithdrawPollDuration(180).send(options);
+    console.log('Set withdrawPollDuration to 180');
 
     await instance.methods.addMember(accounts[1]).send(options);
     console.log('Adds member ' + accounts[1]);
 
-    await instance.methods.proposeReward(web3.utils.toWei('100'), accounts[1]).send(options);
+    await instance.methods.proposeWithdraw(web3.utils.toWei('100'), accounts[1]).send(options);
     console.log('A reward is proposed for ' + accounts[1] + ' by ' + from);
 
     await log('* Reward Pool', instance);
     await upgradePool(accounts, project, instance);
 
-    await instance.methods.setRewardPollDuration(180).send(options);
-    console.log('Set rewardPollDuration to 180');
+    await instance.methods.setWithdawPollDuration(180).send(options);
+    console.log('Set withdrawPollDuration to 180');
 
     await log('* Reward Pool (Upgraded)', instance);
 }

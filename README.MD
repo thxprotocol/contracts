@@ -5,9 +5,9 @@ This repository holds the smart contracts used within the THX ecosystem. This do
 ## Contract Tests
 
 -   [x] Make a deposit
--   [x] Claim a reward
--   [x] Propose a reward
--   [x] Approve a reward proposal
+-   [x] Claim a withdraw
+-   [x] Propose a withdraw
+-   [x] Approve a withdraw proposal
 -   [ ] Reject a reward proposal
 -   [x] Withdraw a reward
 -   [x] Create a reward rule proposal
@@ -26,18 +26,18 @@ event Deposited(address indexed sender, uint256 amount);
 event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
 event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
 event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
-event RewardPollCreated(address reward);
-event RewardPollFinished(address reward, bool agree);
+event WithdrawPollCreated(address reward);
+event WithdrawPollFinished(address reward, bool agree);
 ```
 
 ## Configuration
 
--   rewardPollDuration (default set to `0`)
+-   withdrawPollDuration (default set to `0`)
 -   rewardRulePollDuration (default set to `0`)
 
 ## Governance
 
-Two types of polls are extended from the BasePoll contract. The polls are used to change rewardRule sizes and approve reward proposals and claims.
+Two types of polls are extended from the BasePoll contract. The polls are used to change rewardRule sizes and approve reward proposals and withdraws.
 
 ### Reward Rule Poll
 
@@ -49,11 +49,11 @@ An account with the `MANAGER_ROLE` can cast a vote and the default `vote.weight`
 
 ## Upgrades
 
-Make sure to have a local RPC running at `http://localhost:7545` and run `yarn serve` to execute the upgrade test script as found in the index.js file. This will display logs while updating an instance of the Reward Pool contract. Make sure to duplicate the RewardPool contract and alter the `setRewardPollDuration()` method as proposed in the comments of the test script.
+Make sure to have a local RPC running at `http://localhost:7545` and run `yarn serve` to execute the upgrade test script as found in the index.js file. This will display logs while updating an instance of the Reward Pool contract. Make sure to duplicate the RewardPool contract and alter the `setWithdrawPollDuration()` method as proposed in the comments of the test script.
 
 ```
 // Make a change in the RewardPool contract logic (multiply the value of
-// setRewardPollDuration method by 2), change the contract name to
+// setWithdrawPollDuration method by 2), change the contract name to
 // RewardPoolV2 and compile it.
 ```
 
@@ -63,7 +63,7 @@ Output should be something like this:
 Reward Pool Admin Project is created
 Reward Pool Proxy is created
 Reward Pool Proxy receives 5000
-Set rewardPollDuration to 180
+Set withdrawPollDuration to 180
 Adds member 0x5e0603a66bD209F13477C113dfd95B839026a2b2
 A reward is proposed for 0x5e0603a66bD209F13477C113dfd95B839026a2b2 by 0xBBcCe83aa099217467E4589b553E268d50bcf2Ac
 ====== START PROXY LOG ======
@@ -74,7 +74,7 @@ A reward is proposed for 0x5e0603a66bD209F13477C113dfd95B839026a2b2 by 0xBBcCe83
 ====== END PROXY LOG ======
 Reward Pool Contract is being upgraded...
 Reward Pool Contract is upgraded successfully!
-Set rewardPollDuration to 180
+Set withdrawPollDuration to 180
 ====== START PROXY LOG ======
 * Reward Pool (Upgraded) proxy address:  0x0B12C6d2C604AeF4c6148E755D53933e53d893E3
 * Reward Pool (Upgraded) implementation address: 0x68be83c7aac0813684ac8b898385fbb2e3edaf1b
@@ -97,4 +97,4 @@ RewardPool is derived from the Ownable smart contract and inherits ownership fea
 
 ### [Access Control](https://docs.openzeppelin.com/contracts/3.x/access-control)
 
-AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim rewards and vote on reward rule proposals.
+AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim withdrawals and vote on reward rule proposals.

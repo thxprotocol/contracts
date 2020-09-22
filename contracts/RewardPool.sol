@@ -9,7 +9,7 @@ import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
 
 import './access/Roles.sol';
-import './poll/RewardPoll.sol';
+import './poll/WithdrawPoll.sol';
 import './poll/RewardRulePoll.sol';
 
 contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
@@ -36,15 +36,15 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     RewardRule[] public rewardRules;
-    RewardPoll[] public rewards;
+    WithdrawPoll[] public rewards;
     Deposit[] public deposits;
 
-    uint256 public rewardPollDuration = 0;
+    uint256 public withdrawPollDuration = 0;
     uint256 public rewardRulePollDuration = 0;
 
     mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawalsOf;
-    mapping(address => RewardPoll[]) public rewardsOf;
+    mapping(address => WithdrawPoll[]) public rewardsOf;
 
     IERC20 public token;
 
@@ -57,8 +57,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
     event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
     event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
-    event RewardPollCreated(address reward);
-    event RewardPollFinished(address reward, bool agree);
+    event WithdrawPollCreated(address reward);
+    event WithdrawPollFinished(address reward, bool agree);
 
     /**
      * @dev Initializes the reward pool and sets the owner. Called when contract upgrades are available.
@@ -141,13 +141,13 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Set the duration for a reward poll.
+     * @dev Set the duration for a withdraw poll poll.
      * @param _duration Duration in seconds
      */
-    function setRewardPollDuration(uint256 _duration) public {
+    function setWithdrawPollDuration(uint256 _duration) public {
         require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
-        rewardPollDuration = _duration;
+        withdrawPollDuration = _duration;
     }
 
     /**
@@ -192,13 +192,13 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Creates a reward claim for a rule.
+     * @dev Creates a withdraw claim for a rule.
      * @param _id Reference id of the rule
      */
-    function claimReward(uint256 _id) public onlyMember {
+    function claimWithdraw(uint256 _id) public onlyMember {
         require(rewardRules[_id].state == RewardRuleState.Enabled, 'IS_NOT_ENABLED');
 
-        RewardPoll reward = _createRewardPoll(rewardRules[_id].amount, _msgSender());
+        WithdrawPoll reward = _createWithdrawPoll(rewardRules[_id].amount, _msgSender());
 
         rewards.push(reward);
         rewardsOf[_msgSender()].push(reward);
@@ -209,9 +209,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      * @param _beneficiary Address of the beneficiary
      */
-    function proposeReward(uint256 _amount, address _beneficiary) public {
+    function proposeWithdraw(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
-        RewardPoll reward = _createRewardPoll(_amount, _beneficiary);
+        WithdrawPoll reward = _createWithdrawPoll(_amount, _beneficiary);
         rewards.push(reward);
         rewardsOf[_beneficiary].push(reward);
     }
@@ -221,10 +221,10 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      * @param _beneficiary Address of the receiver of the reward
      */
-    function _createRewardPoll(uint256 _amount, address _beneficiary) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(_beneficiary, _amount, rewardPollDuration, address(this), address(token));
+    function _createWithdrawPoll(uint256 _amount, address _beneficiary) internal returns (WithdrawPoll) {
+        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, withdrawPollDuration, address(this), address(token));
 
-        emit RewardPollCreated(address(poll));
+        emit WithdrawPollCreated(address(poll));
 
         return poll;
     }
@@ -247,8 +247,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _reward Address of reward
      * @param _agree Bool for checking the result of the poll
      */
-    function onRewardPollFinish(address _reward, bool _agree) external {
-        emit RewardPollFinished(_reward, _agree);
+    function onWithdrawPollFinish(address _reward, bool _agree) external {
+        emit WithdrawPollFinished(_reward, _agree);
     }
 
     /**

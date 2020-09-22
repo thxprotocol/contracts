@@ -21,11 +21,11 @@ interface IRewardPool {
     ) external;
 
     /**
-     * @dev RewardPoll callback
+     * @dev WithdrawPoll callback
      * @param _reward Address of the referenced reward
      * @param _agree True if the rule should apply or change
      */
-    function onRewardPollFinish(address _reward, bool _agree) external;
+    function onWithdrawPollFinish(address _reward, bool _agree) external;
 
     /**
      * @dev Withdrawal callback

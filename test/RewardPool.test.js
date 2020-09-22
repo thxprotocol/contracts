@@ -40,15 +40,15 @@ describe('Reward Pool', function() {
     });
 
     it('expects the initial duration to be 0', async function() {
-        const duration = await pool.rewardPollDuration();
+        const duration = await pool.withdrawPollDuration();
 
         expect(parseInt(duration, 10)).to.equal(0);
     });
 
     it('can set the reward poll duration to ' + REWARD_POLL_DURATION + ' seconds', async function() {
-        await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
+        await pool.setWithdrawPollDuration(REWARD_POLL_DURATION, { from });
 
-        const duration = await pool.rewardPollDuration();
+        const duration = await pool.withdrawPollDuration();
 
         expect(duration.toNumber()).to.equal(REWARD_POLL_DURATION);
     });
@@ -61,7 +61,7 @@ describe('Reward Pool', function() {
         expect(await pool.isManager(from)).to.equal(true);
         expect(await pool.isMember(accounts[1])).to.equal(true);
 
-        await pool.proposeReward(amount, accounts[1], { from });
+        await pool.proposeWithdraw(amount, accounts[1], { from });
     });
 
     it('can propose a 100 THX reward for ' + accounts[1], async function() {
@@ -70,17 +70,17 @@ describe('Reward Pool', function() {
         expect(await pool.isMember(from)).to.equal(true);
         expect(await pool.isMember(accounts[1])).to.equal(true);
 
-        await pool.proposeReward(amount, accounts[1], { from });
+        await pool.proposeWithdraw(amount, accounts[1], { from });
     });
 
     it('beneficiary can see its rewards address in the reward', async function() {
         const rewardAddress = await pool.rewardsOf(accounts[1], 0);
 
-        reward = contract.fromArtifact('RewardPoll', rewardAddress);
+        reward = contract.fromArtifact('WithdrawPoll', rewardAddress);
 
         expect(reward.address).to.equal(rewardAddress);
     });
-    it('can vote for a reward claim', async () => vote(reward, true));
+    it('can vote for a wtihdraw claim', async () => vote(reward, true));
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {

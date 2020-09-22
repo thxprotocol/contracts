@@ -1,4 +1,4 @@
-// contracts/poll/RewardPoll.sol
+// contracts/poll/WithdrawPoll.sol
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.6.4;
@@ -9,7 +9,7 @@ import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import './BasePoll.sol';
 import '../access/Roles.sol';
 
-contract RewardPoll is BasePoll, Roles {
+contract WithdrawPoll is BasePoll, Roles {
     using SafeMath for uint256;
 
     enum RewardState { Pending, Approved, Rejected, Withdrawn }
@@ -20,7 +20,7 @@ contract RewardPoll is BasePoll, Roles {
     RewardState public state;
 
     /**
-     * @dev RewardPoll Constructor
+     * @dev WithdrawPoll Constructor
      * @param _beneficiary Beneficiary of the reward
      * @param _amount Size of the reward
      * @param _duration Poll duration
@@ -69,6 +69,6 @@ contract RewardPoll is BasePoll, Roles {
             state = RewardState.Rejected;
         }
 
-        pool.onRewardPollFinish(address(this), agree);
+        pool.onWithdrawPollFinish(address(this), agree);
     }
 }
