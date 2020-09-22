@@ -36,7 +36,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     RewardRule[] public rewardRules;
-    WithdrawPoll[] public rewards;
+    WithdrawPoll[] public withdraws;
     Deposit[] public deposits;
 
     uint256 public withdrawPollDuration = 0;
@@ -44,7 +44,7 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawalsOf;
-    mapping(address => WithdrawPoll[]) public rewardsOf;
+    mapping(address => WithdrawPoll[]) public withdrawalPollsOf;
 
     IERC20 public token;
 
@@ -84,8 +84,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Get the total amount of deposits in this pool
      */
-    function getRewardCount() public view returns (uint256) {
-        return rewards.length;
+    function getWithdrawCount() public view returns (uint256) {
+        return withdraws.length;
     }
 
     /**
@@ -112,11 +112,11 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Get the amount of rewards for a given address
+     * @dev Get the amount of withdrawalPolls for a given address
      * @param _member Address of the sender of deposits
      */
-    function getRewardCountOf(address _member) public view returns (uint256) {
-        return rewardsOf[_member].length;
+    function getWithdrawPollsCountOf(address _member) public view returns (uint256) {
+        return withdrawalPollsOf[_member].length;
     }
 
     /**
@@ -198,10 +198,10 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     function claimWithdraw(uint256 _id) public onlyMember {
         require(rewardRules[_id].state == RewardRuleState.Enabled, 'IS_NOT_ENABLED');
 
-        WithdrawPoll reward = _createWithdrawPoll(rewardRules[_id].amount, _msgSender());
+        WithdrawPoll withdraw = _createWithdrawPoll(rewardRules[_id].amount, _msgSender());
 
-        rewards.push(reward);
-        rewardsOf[_msgSender()].push(reward);
+        withdraws.push(withdraw);
+        withdrawalPollsOf[_msgSender()].push(withdraw);
     }
 
     /**
@@ -211,9 +211,9 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
-        WithdrawPoll reward = _createWithdrawPoll(_amount, _beneficiary);
-        rewards.push(reward);
-        rewardsOf[_beneficiary].push(reward);
+        WithdrawPoll withdraw = _createWithdrawPoll(_amount, _beneficiary);
+        withdraws.push(withdraw);
+        withdrawalPollsOf[_beneficiary].push(withdraw);
     }
 
     /**

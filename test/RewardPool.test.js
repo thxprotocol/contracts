@@ -74,7 +74,7 @@ describe('Reward Pool', function() {
     });
 
     it('beneficiary can see its rewards address in the reward', async function() {
-        const rewardAddress = await pool.rewardsOf(accounts[1], 0);
+        const rewardAddress = await pool.withdrawalPollsOf(accounts[1], 0);
 
         reward = contract.fromArtifact('WithdrawPoll', rewardAddress);
 

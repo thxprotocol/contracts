@@ -8,8 +8,8 @@ This repository holds the smart contracts used within the THX ecosystem. This do
 -   [x] Claim a withdraw
 -   [x] Propose a withdraw
 -   [x] Approve a withdraw proposal
--   [ ] Reject a reward proposal
--   [x] Withdraw a reward
+-   [ ] Reject a withdraw proposal
+-   [x] Withdraw a withdrawal
 -   [x] Create a reward rule proposal
 -   [x] Approve a reward rule proposal
 -   [ ] Reject a reward rule proposal
