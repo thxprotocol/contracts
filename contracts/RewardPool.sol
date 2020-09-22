@@ -10,16 +10,16 @@ import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 
 import './access/Roles.sol';
 import './poll/WithdrawPoll.sol';
-import './poll/RewardRulePoll.sol';
+import './poll/RewardPoll.sol';
 
 contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     using SafeMath for uint256;
 
-    struct RewardRule {
+    struct Reward {
         uint256 id;
         uint256 amount;
-        RewardRuleState state;
-        RewardRulePoll poll;
+        RewardState state;
+        RewardPoll poll;
         uint256 updated;
     }
 
@@ -35,12 +35,12 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 timestamp;
     }
 
-    RewardRule[] public rewardRules;
+    Reward[] public rewards;
     WithdrawPoll[] public withdraws;
     Deposit[] public deposits;
 
     uint256 public withdrawPollDuration = 0;
-    uint256 public rewardRulePollDuration = 0;
+    uint256 public rewardPollDuration = 0;
 
     mapping(address => Deposit[]) public depositsOf;
     mapping(address => Withdrawal[]) public withdrawalsOf;
@@ -50,13 +50,13 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /*==== IMPORTANT: Do not alter (only extend) the storage layout above this line! ====*/
 
-    enum RewardRuleState { Disabled, Enabled }
+    enum RewardState { Disabled, Enabled }
 
     event Withdrawn(address indexed beneficiary, uint256 reward);
     event Deposited(address indexed sender, uint256 amount);
-    event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
-    event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
-    event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
+    event RewardPollCreated(uint256 id, uint256 proposal, address account);
+    event RewardPollFinished(uint256 id, uint256 proposal, bool agree);
+    event RewardUpdated(uint256 id, RewardState state, uint256 amount);
     event WithdrawPollCreated(address reward);
     event WithdrawPollFinished(address reward, bool agree);
 
@@ -91,8 +91,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Get the total amount of deposits in this pool
      */
-    function getRewardRuleCount() public view returns (uint256) {
-        return rewardRules.length;
+    function getRewardCount() public view returns (uint256) {
+        return rewards.length;
     }
 
     /**
@@ -151,54 +151,54 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Creates a reward rule claim for a rule.
+     * @dev Set the reward poll duration
      * @param _duration Duration in seconds
      */
-    function setRewardRulePollDuration(uint256 _duration) public {
+    function setRewardPollDuration(uint256 _duration) public {
         require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
-        rewardRulePollDuration = _duration;
+        rewardPollDuration = _duration;
     }
 
     /**
-     * @dev Creates a reward claim for a rule.
-     * @param _amount Initial size for the reward rule.
+     * @dev Creates a reward.
+     * @param _amount Initial size for the reward.
      */
-    function addRewardRule(uint256 _amount) public {
+    function addReward(uint256 _amount) public {
         require(_msgSender() == owner(), 'IS_NOT_OWNER');
 
-        RewardRule memory rule;
+        Reward memory reward;
 
-        rule.id = rewardRules.length;
-        rule.amount = 0;
-        rule.state = RewardRuleState.Disabled;
-        rule.poll = _createRewardRulePoll(rewardRules.length, _amount);
-        rule.updated = now;
+        reward.id = rewards.length;
+        reward.amount = 0;
+        reward.state = RewardState.Disabled;
+        reward.poll = _createRewardPoll(rewards.length, _amount);
+        reward.updated = now;
 
-        rewardRules.push(rule);
+        rewards.push(reward);
     }
 
     /**
-     * @dev Starts a reward rule poll
-     * @param _id References reward rule
-     * @param _amount New size for the reward rule.
+     * @dev Starts a reward poll
+     * @param _id References reward
+     * @param _amount New size for the reward.
      */
-    function updateRewardRule(uint256 _id, uint256 _amount) public {
-        require(rewardRules[_id].poll.finalized(), 'IS_NOT_FINALIZED');
+    function updateReward(uint256 _id, uint256 _amount) public {
+        require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
         require(isMember(_msgSender()), 'IS_NOT_MEMBER');
-        require(_amount != rewardRules[_id].amount, 'IS_EQUAL');
+        require(_amount != rewards[_id].amount, 'IS_EQUAL');
 
-        rewardRules[_id].poll = _createRewardRulePoll(_id, _amount);
+        rewards[_id].poll = _createRewardPoll(_id, _amount);
     }
 
     /**
-     * @dev Creates a withdraw claim for a rule.
-     * @param _id Reference id of the rule
+     * @dev Creates a withdraw claim for a reward.
+     * @param _id Reference id of the reward
      */
     function claimWithdraw(uint256 _id) public onlyMember {
-        require(rewardRules[_id].state == RewardRuleState.Enabled, 'IS_NOT_ENABLED');
+        require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
 
-        WithdrawPoll withdraw = _createWithdrawPoll(rewardRules[_id].amount, _msgSender());
+        WithdrawPoll withdraw = _createWithdrawPoll(rewards[_id].amount, _msgSender());
 
         withdraws.push(withdraw);
         withdrawalPollsOf[_msgSender()].push(withdraw);
@@ -230,14 +230,14 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Starts a reward rule poll and stores the address of the poll.
-     * @param _id Referenced reward rule
+     * @dev Starts a reward poll and stores the address of the poll.
+     * @param _id Referenced reward
      * @param _amount Size of the reward
      */
-    function _createRewardRulePoll(uint256 _id, uint256 _amount) internal returns (RewardRulePoll) {
-        RewardRulePoll poll = new RewardRulePoll(_id, _amount, rewardRulePollDuration, address(this));
+    function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
+        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this));
 
-        emit RewardRulePollCreated(_id, _amount, _msgSender());
+        emit RewardPollCreated(_id, _amount, _msgSender());
 
         return poll;
     }
@@ -253,26 +253,26 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev Called when poll is finished
-     * @param _id id of reward rule
-     * @param _amount New amount for the reward rule
+     * @param _id id of reward
+     * @param _amount New amount for the reward
      * @param _agree Bool for checking the result of the poll
      */
-    function onRewardRulePollFinish(
+    function onRewardPollFinish(
         uint256 _id,
         uint256 _amount,
         bool _agree
     ) external {
         if (_agree) {
-            rewardRules[_id].amount = _amount;
+            rewards[_id].amount = _amount;
 
             if (_amount > 0) {
-                rewardRules[_id].state = RewardRuleState.Enabled;
+                rewards[_id].state = RewardState.Enabled;
             } else {
-                rewardRules[_id].state = RewardRuleState.Disabled;
+                rewards[_id].state = RewardState.Disabled;
             }
         }
 
-        emit RewardRulePollFinished(_id, _amount, _agree);
+        emit RewardPollFinished(_id, _amount, _agree);
     }
 
     /**

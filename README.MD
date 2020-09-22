@@ -10,9 +10,9 @@ This repository holds the smart contracts used within the THX ecosystem. This do
 -   [x] Approve a withdraw proposal
 -   [ ] Reject a withdraw proposal
 -   [x] Withdraw a withdrawal
--   [x] Create a reward rule proposal
--   [x] Approve a reward rule proposal
--   [ ] Reject a reward rule proposal
+-   [x] Create a reward proposal
+-   [x] Approve a reward proposal
+-   [ ] Reject a reward proposal
 -   [x] Add a member
 -   [x] Revoke member role
 -   [x] Add a manager
@@ -23,9 +23,9 @@ This repository holds the smart contracts used within the THX ecosystem. This do
 ```
 event Withdrawn(address indexed beneficiary, uint256 reward);
 event Deposited(address indexed sender, uint256 amount);
-event RewardRulePollCreated(uint256 id, uint256 proposal, address account);
-event RewardRulePollFinished(uint256 id, uint256 proposal, bool agree);
-event RewardRuleUpdated(uint256 id, RewardRuleState state, uint256 amount);
+event RewardPollCreated(uint256 id, uint256 proposal, address account);
+event RewardPollFinished(uint256 id, uint256 proposal, bool agree);
+event RewardUpdated(uint256 id, RewardState state, uint256 amount);
 event WithdrawPollCreated(address reward);
 event WithdrawPollFinished(address reward, bool agree);
 ```
@@ -33,13 +33,13 @@ event WithdrawPollFinished(address reward, bool agree);
 ## Configuration
 
 -   withdrawPollDuration (default set to `0`)
--   rewardRulePollDuration (default set to `0`)
+-   rewardPollDuration (default set to `0`)
 
 ## Governance
 
-Two types of polls are extended from the BasePoll contract. The polls are used to change rewardRule sizes and approve reward proposals and withdraws.
+Two types of polls are extended from the BasePoll contract. The polls are used to change reward sizes and approve reward proposals and withdraws.
 
-### Reward Rule Poll
+### Withdraw Poll
 
 An account with the `MEMBER_ROLE` can cast a vote and the default `vote.weight` will be `1`. When the member revokes its vote `vote.time` will be set to `0`.
 
@@ -97,4 +97,4 @@ RewardPool is derived from the Ownable smart contract and inherits ownership fea
 
 ### [Access Control](https://docs.openzeppelin.com/contracts/3.x/access-control)
 
-AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim withdrawals and vote on reward rule proposals.
+AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a reward pool and allow them to claim withdrawals and vote on reward proposals.
