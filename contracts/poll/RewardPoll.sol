@@ -18,7 +18,7 @@ contract RewardPoll is BasePoll {
      * @param _id Id of the referenced reward
      * @param _amount Total amount of the reward
      * @param _duration Poll start time
-     * @param _poolAddress Reward Pool contract address
+     * @param _poolAddress Asset Pool contract address
      */
     constructor(
         uint256 _id,

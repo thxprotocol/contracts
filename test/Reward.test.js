@@ -11,7 +11,7 @@ const {
     finalize,
 } = require('./shared.js');
 const THXToken = contract.fromArtifact('THXToken');
-const RewardPool = contract.fromArtifact('RewardPool');
+const AssetPool = contract.fromArtifact('AssetPool');
 
 let token = null;
 let pool = null;
@@ -25,7 +25,7 @@ describe('Reward with voting', function() {
         const amount = web3.utils.toWei('1000');
 
         token = await THXToken.new({ from });
-        pool = await RewardPool.new({ from });
+        pool = await AssetPool.new({ from });
 
         await pool.initialize(from, token.address, { from });
         await token.mint(from, amount, { from });
@@ -117,14 +117,14 @@ describe('Reward with voting', function() {
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
         const oldBeneficiaryBalance = await token.balanceOf(from);
-        const oldRewardPoolBalance = await token.balanceOf(pool.address);
+        const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
         await reward.withdraw({ from });
 
         const newBeneficiaryBalance = await token.balanceOf(from);
-        const newRewardPoolBalance = await token.balanceOf(pool.address);
+        const newAssetPoolBalance = await token.balanceOf(pool.address);
 
-        expect(parseInt(newRewardPoolBalance, 10)).to.lessThan(parseInt(oldRewardPoolBalance, 10));
+        expect(parseInt(newAssetPoolBalance, 10)).to.lessThan(parseInt(oldAssetPoolBalance, 10));
         expect(parseInt(newBeneficiaryBalance, 10)).to.greaterThan(parseInt(oldBeneficiaryBalance, 10));
     });
 });
@@ -137,7 +137,7 @@ describe('Reward without voting', function() {
         const amount = web3.utils.toWei('1000');
 
         token = await THXToken.new({ from });
-        pool = await RewardPool.new({ from });
+        pool = await AssetPool.new({ from });
 
         await pool.initialize(from, token.address, { from });
         await token.mint(from, amount, { from });
@@ -222,14 +222,14 @@ describe('Reward without voting', function() {
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
         const oldBeneficiaryBalance = await token.balanceOf(from);
-        const oldRewardPoolBalance = await token.balanceOf(pool.address);
+        const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
         await reward.withdraw({ from });
 
         const newBeneficiaryBalance = await token.balanceOf(from);
-        const newRewardPoolBalance = await token.balanceOf(pool.address);
+        const newAssetPoolBalance = await token.balanceOf(pool.address);
 
-        expect(parseInt(newRewardPoolBalance, 10)).to.lessThan(parseInt(oldRewardPoolBalance, 10));
+        expect(parseInt(newAssetPoolBalance, 10)).to.lessThan(parseInt(oldAssetPoolBalance, 10));
         expect(parseInt(newBeneficiaryBalance, 10)).to.greaterThan(parseInt(oldBeneficiaryBalance, 10));
     });
 });

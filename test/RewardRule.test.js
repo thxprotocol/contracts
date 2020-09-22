@@ -1,7 +1,7 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 const THXToken = contract.fromArtifact('THXToken');
-const RewardPool = contract.fromArtifact('RewardPool');
+const AssetPool = contract.fromArtifact('AssetPool');
 const { REWARD_POLL_DURATION, vote, timeTravel, finalize } = require('./shared.js');
 
 let token = null;
@@ -13,7 +13,7 @@ describe('Rewards', function() {
 
     before(async () => {
         token = await THXToken.new({ from });
-        pool = await RewardPool.new({ from });
+        pool = await AssetPool.new({ from });
 
         await pool.initialize(from, token.address);
     });

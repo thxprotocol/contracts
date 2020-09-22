@@ -4,10 +4,10 @@
 pragma solidity ^0.6.4;
 
 /**
- * @title IRewardPool
+ * @title IAssetPool
  * @dev Fund callbacks used by polling contracts
  */
-interface IRewardPool {
+interface IAssetPool {
     /**
      * @dev RewardPoll callback
      * @param _id The referenced reward

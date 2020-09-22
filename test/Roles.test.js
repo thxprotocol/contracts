@@ -1,7 +1,7 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 const THXToken = contract.fromArtifact('THXToken');
-const RewardPool = contract.fromArtifact('RewardPool');
+const AssetPool = contract.fromArtifact('AssetPool');
 
 let token = null;
 let pool = null;
@@ -11,7 +11,7 @@ describe('Roles', function() {
 
     before(async () => {
         token = await THXToken.new({ from });
-        pool = await RewardPool.new({ from });
+        pool = await AssetPool.new({ from });
 
         await pool.initialize(from, token.address);
     });

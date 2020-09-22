@@ -1,4 +1,4 @@
-// contracts/RewardPool.sol
+// contracts/AssetPool.sol
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.6.4;
@@ -12,7 +12,7 @@ import './access/Roles.sol';
 import './poll/WithdrawPoll.sol';
 import './poll/RewardPoll.sol';
 
-contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
+contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     using SafeMath for uint256;
 
     struct Reward {
@@ -61,8 +61,8 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     event WithdrawPollFinished(address reward, bool agree);
 
     /**
-     * @dev Initializes the reward pool and sets the owner. Called when contract upgrades are available.
-     * @param _owner Address of the owner of the reward pool
+     * @dev Initializes the asset pool and sets the owner. Called when contract upgrades are available.
+     * @param _owner Address of the owner of the asset pool
      * @param _tokenAddress Address of the ERC20 token used for this pool
      */
     function initialize(address _owner, address _tokenAddress) public initializer {

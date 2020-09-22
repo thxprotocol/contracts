@@ -24,7 +24,7 @@ contract WithdrawPoll is BasePoll, Roles {
      * @param _beneficiary Beneficiary of the reward
      * @param _amount Size of the reward
      * @param _duration Poll duration
-     * @param _poolAddress Reward Pool contract address
+     * @param _poolAddress Asset Pool contract address
      * @param _tokenAddress ERC20 compatible token contract address
      */
     constructor(
