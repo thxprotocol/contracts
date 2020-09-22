@@ -186,7 +186,6 @@ contract RewardPool is Initializable, OwnableUpgradeSafe, Roles {
     function updateRewardRule(uint256 _id, uint256 _amount) public {
         require(rewardRules[_id].poll.finalized(), 'IS_NOT_FINALIZED');
         require(isMember(_msgSender()), 'IS_NOT_MEMBER');
-        require(_amount >= 0, 'IS_NEGATIVE');
         require(_amount != rewardRules[_id].amount, 'IS_EQUAL');
 
         rewardRules[_id].poll = _createRewardRulePoll(_id, _amount);
