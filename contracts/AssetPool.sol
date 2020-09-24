@@ -75,13 +75,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Check if an address is a pool member
-     */
-    function IsPoolMember(address _member) external view returns (bool) {
-        return isMember(_member);
-    }
-
-    /**
      * @dev Get the total amount of deposits in this pool
      */
     function getDepositCount() public view returns (uint256) {

@@ -105,7 +105,7 @@ contract BasePoll {
         bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _agree, _nonce, this)));
         require(Signature.recoverSigner(message, _sig) == _voter, "WRONG_SIG");
         require(votesByAddress[_voter].time == 0, 'HAS_VOTED');
-        require(pool.IsPoolMember(_voter), "NO_MEMBER");
+        require(pool.isMember(_voter), "NO_MEMBER");
 
         uint256 voiceWeight = 1;
 
