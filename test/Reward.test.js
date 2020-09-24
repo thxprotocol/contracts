@@ -89,10 +89,19 @@ describe('Reward with voting', function() {
 
         expect(amount).to.equal('50');
     });
-
-    it('can vote for a reward proposal', async function() {
+    it('non member cant vote for a reward proposal', async function() {
         hash = web3.utils.soliditySha3(from, true, 1, poll.address)
         sig = await web3.eth.accounts.sign(hash, voter_pk);
+        await expect (
+            vote(poll, voter, true, 1, sig["signature"])
+        ).to.be.revertedWith("NO_MEMBER");
+    });
+    it('can make ' + voter + 'a member', async function() {
+        expect(await pool.isMember(voter)).to.equal(false);
+        await pool.addMember(voter, { from });
+        expect(await pool.isMember(voter)).to.equal(true);
+    });
+    it('member can vote for a reward proposal', async function() {
         await vote(poll, voter, true, 1, sig["signature"])
     });
     it('admin cant publish twice', async function() {
@@ -137,7 +146,6 @@ describe('Reward with voting', function() {
         expect(beneficiary).to.equal(from);
         expect(web3.utils.fromWei(amount)).to.equal(REWARD_AMOUNT);
     });
-
     it('can vote for a withdraw claim', async function() {
         hash = web3.utils.soliditySha3(from, true, 1, reward.address)
         sig = await web3.eth.accounts.sign(hash, voter_pk);

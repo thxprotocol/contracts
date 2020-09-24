@@ -80,9 +80,19 @@ describe('Asset Pool', function() {
 
         expect(reward.address).to.equal(rewardAddress);
     });
-    it('can vote for a wtihdraw claim', async function() {
+    it('non member cant vote for a withdraw proposal', async function() {
         hash = web3.utils.soliditySha3(from, true, 1, reward.address)
         sig = await web3.eth.accounts.sign(hash, voter_pk);
+        await expect (
+            vote(reward, voter, true, 1, sig["signature"])
+        ).to.be.revertedWith("NO_MEMBER");
+    });
+    it('can make ' + voter + 'a member', async function() {
+        expect(await pool.isMember(voter)).to.equal(false);
+        await pool.addMember(voter, { from });
+        expect(await pool.isMember(voter)).to.equal(true);
+    });
+    it('can vote for a withdraw claim', async function() {
         await vote(reward, voter, true, 1, sig["signature"])
     });
     it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));

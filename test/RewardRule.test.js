@@ -70,11 +70,26 @@ describe('Rewards', function() {
 
         expect(parseInt(amount, 10)).to.equal(50);
     });
-
-    it('can vote for a reward proposal', async function() {
+    it('non member cant vote for a reward proposal', async function() {
         hash = web3.utils.soliditySha3(from, true, 1, poll.address)
         sig = await web3.eth.accounts.sign(hash, voter_pk);
+        await expect (
+            vote(poll, voter, true, 1, sig["signature"])
+        ).to.be.revertedWith("NO_MEMBER");
+    });
+    it('can make ' + voter + 'a member', async function() {
+        expect(await pool.isMember(voter)).to.equal(false);
+        await pool.addMember(voter, { from });
+        expect(await pool.isMember(voter)).to.equal(true);
+    });
+    it('can vote for a reward proposal', async function() {
+        nonce = await poll.getLatestNonce(voter);
+        expect(nonce.eq(0))
+
         await vote(poll, voter, true, 1, sig["signature"])
+
+        nonce = await poll.getLatestNonce(voter);
+        expect(nonce.eq(1));
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
