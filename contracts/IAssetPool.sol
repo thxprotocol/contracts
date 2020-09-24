@@ -4,28 +4,28 @@
 pragma solidity ^0.6.4;
 
 /**
- * @title IRewardPool
+ * @title IAssetPool
  * @dev Fund callbacks used by polling contracts
  */
-interface IRewardPool {
+interface IAssetPool {
     /**
-     * @dev RulePoll callback
-     * @param _id The referenced rule
+     * @dev RewardPoll callback
+     * @param _id The referenced reward
      * @param _amount The proposed reward size
-     * @param _agree True if the rule should apply or change
+     * @param _agree True if the reward should apply or change
      */
-    function onRewardRulePollFinish(
+    function onRewardPollFinish(
         uint256 _id,
         uint256 _amount,
         bool _agree
     ) external;
 
     /**
-     * @dev RewardPoll callback
+     * @dev WithdrawPoll callback
      * @param _reward Address of the referenced reward
-     * @param _agree True if the rule should apply or change
+     * @param _agree True if the reward should apply or change
      */
-    function onRewardPollFinish(address _reward, bool _agree) external;
+    function onWithdrawPollFinish(address _reward, bool _agree) external;
 
     /**
      * @dev Withdrawal callback

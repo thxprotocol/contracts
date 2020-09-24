@@ -1,4 +1,4 @@
-// contracts/RewardPool.sol
+// contracts/AssetPool.sol
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.6.4;
@@ -35,8 +35,8 @@ contract Roles is AccessControlUpgradeSafe {
     }
 
     /**
-     * @dev Initializes the reward pool and sets the owner. Called when contract upgrades are available.
-     * @param _owner Address of the owner of the reward pool
+     * @dev Initializes the asset pool and sets the owner. Called when contract upgrades are available.
+     * @param _owner Address of the owner of the asset pool
      */
     function __Roles_init(address _owner) public {
         __AccessControl_init();
@@ -85,7 +85,7 @@ contract Roles is AccessControlUpgradeSafe {
 
     /**
      * @dev Verifies the account has a MANAGER_ROLE
-     * @param _account Address of the owner of the reward pool
+     * @param _account Address of the owner of the asset pool
      */
     function isManager(address _account) public view returns (bool) {
         return hasRole(MANAGER_ROLE, _account);
@@ -93,7 +93,7 @@ contract Roles is AccessControlUpgradeSafe {
 
     /**
      * @dev Revokes role and sets manager address to false in list.
-     * @param _account Address of the owner of the reward pool
+     * @param _account Address of the owner of the asset pool
      */
     function removeManager(address _account) public onlyManager {
         revokeRole(MANAGER_ROLE, _account);

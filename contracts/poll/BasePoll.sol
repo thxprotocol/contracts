@@ -5,7 +5,7 @@ pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
 
-import '../IRewardPool.sol';
+import '../IAssetPool.sol';
 
 contract BasePoll {
     using SafeMath for uint256;
@@ -16,7 +16,7 @@ contract BasePoll {
         bool agree;
     }
 
-    IRewardPool public pool;
+    IAssetPool public pool;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -42,7 +42,7 @@ contract BasePoll {
 
     /**
      * @dev BasePoll Constructor
-     * @param _poolAddress Reward Pool contract address
+     * @param _poolAddress Asset Pool contract address
      * @param _startTime Poll start time
      * @param _endTime Poll end time
      */
@@ -54,7 +54,7 @@ contract BasePoll {
         require(_poolAddress != address(0), 'IS_INVALID_ADDRESS');
         require(_startTime >= now, 'IS_NO_VALID_TIME');
 
-        pool = IRewardPool(_poolAddress);
+        pool = IAssetPool(_poolAddress);
 
         startTime = _startTime;
         endTime = _endTime;
@@ -122,6 +122,7 @@ contract BasePoll {
         return true;
     }
 
+    // why are there 2 view methods with the same return value?
     function isNowApproved() public view returns (bool) {
         return isSubjectApproved();
     }
