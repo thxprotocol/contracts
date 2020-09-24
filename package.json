@@ -27,5 +27,8 @@
         "printWidth": 120,
         "trailingComma": "all",
         "quoteProps": "consistent"
+    },
+    "dependencies": {
+        "ethereum-waffle": "^3.1.0"
     }
 }

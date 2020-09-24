@@ -9,14 +9,14 @@ module.exports = {
     REWARD_AMOUNT: '50',
     DEPOSIT_AMOUNT: '1000',
     MINT_AMOUNT: '5000',
-    vote: async (poll, agree) => {
-        let vote = await poll.votesByAddress(from);
+    vote: async (poll, voter, agree, nonce, sig) => {
+        let vote = await poll.votesByAddress(voter);
 
         expect(vote.time.toNumber()).to.equal(0);
 
-        await poll.vote(from, agree, { from });
+        await poll.vote(voter, agree, nonce, sig, { from });
 
-        vote = await poll.votesByAddress(from);
+        vote = await poll.votesByAddress(voter);
 
         expect(vote.time.toNumber()).to.not.equal(0);
         expect(vote.weight.toNumber()).to.equal(1);

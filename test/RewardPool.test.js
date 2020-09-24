@@ -80,7 +80,11 @@ describe('Asset Pool', function() {
 
         expect(reward.address).to.equal(rewardAddress);
     });
-    it('can vote for a wtihdraw claim', async () => vote(reward, true));
+    it('can vote for a wtihdraw claim', async function() {
+        hash = web3.utils.soliditySha3(from, true, 1, reward.address)
+        sig = await web3.eth.accounts.sign(hash, voter_pk);
+        await vote(reward, voter, true, 1, sig["signature"])
+    });
     it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {

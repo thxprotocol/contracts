@@ -6,6 +6,7 @@ pragma solidity ^0.6.4;
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
 
 import '../IAssetPool.sol';
+import '../lib/Signature.sol';
 
 contract BasePoll {
     using SafeMath for uint256;
@@ -17,6 +18,7 @@ contract BasePoll {
     }
 
     IAssetPool public pool;
+    address public voteAdmin;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -29,9 +31,17 @@ contract BasePoll {
     bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
+    mapping(address => uint256) public memberNonces;
 
     modifier checkTime() {
         require(now >= startTime && now <= endTime, 'IS_NO_VALID_TIME');
+        _;
+    }
+
+    modifier onlyVoteAdmin() {
+        require(
+            msg.sender == voteAdmin, 'caller is not the voteAdmin'
+        );
         _;
     }
 
@@ -40,14 +50,30 @@ contract BasePoll {
         _;
     }
 
+    modifier useNonce(address _voter, uint256 _nonce) {
+        uint256 lastNonce = memberNonces[_voter];
+        require(lastNonce + 1 == _nonce, "INVALID_NONCE");
+        memberNonces[_voter] = _nonce;
+        _;
+    }
+    /**
+     * @dev Get the latest nonce of a given voter
+     * @param _voter Address of the voter
+     */
+    function getLatestNonce(address _voter) public view returns (uint256) {
+        return memberNonces[_voter];
+    }
+
     /**
      * @dev BasePoll Constructor
      * @param _poolAddress Asset Pool contract address
+     * @param _voteAdmin Address that is able to send signed message to vote and revokeVote
      * @param _startTime Poll start time
      * @param _endTime Poll end time
      */
     constructor(
         address _poolAddress,
+        address _voteAdmin,
         uint256 _startTime,
         uint256 _endTime
     ) public {
@@ -58,6 +84,7 @@ contract BasePoll {
 
         startTime = _startTime;
         endTime = _endTime;
+        voteAdmin = _voteAdmin;
 
         if (_startTime == _endTime) {
             bypassVotes = true;
@@ -66,41 +93,53 @@ contract BasePoll {
 
     /**
      * @dev Process user`s vote
-     * @param voter The address of the user voting
-     * @param agree True if user endorses the proposal else False
+     * @param _voter The address of the user voting
+     * @param _agree True if user endorses the proposal else False
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
-    function vote(address voter, bool agree) external checkTime {
-        require(voter != address(0), 'IS_INVALID_ADDRESS');
-        require(votesByAddress[voter].time == 0, 'HAS_VOTED');
+    function vote(address _voter, bool _agree, uint256 _nonce, bytes calldata _sig)
+    // _voter parameter can be removed. as _voter is recoverd with recoverSigner.
+    // but _voter is currently used by useNonce for readability.
+    external checkTime onlyVoteAdmin useNonce(_voter, _nonce) {
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _agree, _nonce, this)));
+        require(Signature.recoverSigner(message, _sig) == _voter, "WRONG_SIG");
+        require(votesByAddress[_voter].time == 0, 'HAS_VOTED');
+        require(pool.IsPoolMember(_voter), "NO_MEMBER");
 
         uint256 voiceWeight = 1;
 
-        if (agree) {
+        if (_agree) {
             yesCounter = yesCounter.add(voiceWeight);
         } else {
             noCounter = noCounter.add(voiceWeight);
         }
 
-        votesByAddress[voter].time = now;
-        votesByAddress[voter].weight = voiceWeight;
-        votesByAddress[voter].agree = agree;
+        votesByAddress[_voter].time = now;
+        votesByAddress[_voter].weight = voiceWeight;
+        votesByAddress[_voter].agree = _agree;
 
         totalVoted = totalVoted.add(1);
     }
 
     /**
      * @dev Revoke user`s vote
-     * @param voter The address of the user voting
+     * @param _voter The address of the user voting
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
-    function revokeVote(address voter) external checkTime {
-        require(votesByAddress[voter].time > 0, 'HAS_NOT_VOTED');
+    function revokeVote(address _voter, uint256 _nonce, bytes calldata _sig)
+    external checkTime onlyVoteAdmin useNonce(_voter, _nonce) {
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _nonce, this)));
+        require(Signature.recoverSigner(message, _sig) == _voter);
+        require(votesByAddress[_voter].time > 0, 'HAS_NOT_VOTED');
 
-        uint256 voiceWeight = votesByAddress[voter].weight;
-        bool agree = votesByAddress[voter].agree;
+        uint256 voiceWeight = votesByAddress[_voter].weight;
+        bool agree = votesByAddress[_voter].agree;
 
-        votesByAddress[voter].time = 0;
-        votesByAddress[voter].weight = 0;
-        votesByAddress[voter].agree = false;
+        votesByAddress[_voter].time = 0;
+        votesByAddress[_voter].weight = 0;
+        votesByAddress[_voter].agree = false;
 
         totalVoted = totalVoted.sub(1);
         if (agree) {
