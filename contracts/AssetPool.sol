@@ -227,6 +227,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
             _amount,
             withdrawPollDuration,
             address(this),
+            owner(),
             address(token)
         );
 
@@ -241,7 +242,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      */
     function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this));
+        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this), owner());
 
         emit RewardPollCreated(_id, _amount, _msgSender());
 

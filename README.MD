@@ -2,21 +2,18 @@
 
 This repository holds the smart contracts used within the THX ecosystem. This document should provide more information about the configuration and governance of a asset pool. It also lists the tests for features in the contracts, explains the upgradability and references to the implemented Open Zeppelin standard contracts.
 
-## Contract Tests
+## Testing
 
--   [x] Make a deposit
--   [x] Claim a withdraw
--   [x] Propose a withdraw
--   [x] Approve a withdraw proposal
--   [ ] Reject a withdraw proposal
--   [x] Withdraw a withdrawal
--   [x] Create a reward proposal
--   [x] Approve a reward proposal
--   [ ] Reject a reward proposal
--   [x] Add a member
--   [x] Revoke member role
--   [x] Add a manager
--   [x] Revoke manager role
+```
+# Run all tests
+npm run test
+
+# Run specific test
+npm run test -- ./test/RewardPool.test.js
+npm run test -- ./test/Roles.test.js
+npm run test -- ./test/RewardRule.test.js
+npm run test -- ./test/Reward.test.js
+```
 
 ## Events
 

@@ -1,15 +1,17 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-const { expect } = require('chai');
+const { expect, use } = require('chai');
+const { solidity } = require('ethereum-waffle');
+use(solidity);
 const THXToken = contract.fromArtifact('THXToken');
 const AssetPool = contract.fromArtifact('AssetPool');
-const { REWARD_POLL_DURATION, vote, timeTravel, finalize } = require('./shared.js');
-
-let token = null;
-let pool = null;
-let poll = null;
+const { REWARD_POLL_DURATION, VOTER, VOTER_PK, vote, timeTravel, finalize } = require('./shared.js');
 
 describe('Rewards', function() {
     const [from] = accounts;
+
+    let token,
+        pool,
+        poll = null;
 
     before(async () => {
         token = await THXToken.new({ from });
@@ -31,16 +33,13 @@ describe('Rewards', function() {
         expect(parseInt(duration, 10)).to.equal(0);
     });
 
-    it(
-        'can set the reward poll duration to ' + REWARD_POLL_DURATION + ' seconds (3 minutes)',
-        async function() {
-            await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
+    it('can set the reward poll duration to ' + REWARD_POLL_DURATION + ' seconds (3 minutes)', async function() {
+        await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
 
-            const duration = await pool.rewardPollDuration();
+        const duration = await pool.rewardPollDuration();
 
-            expect(parseInt(duration, 10)).to.equal(REWARD_POLL_DURATION);
-        },
-    );
+        expect(parseInt(duration, 10)).to.equal(REWARD_POLL_DURATION);
+    });
 
     it('can not create a reward when I am not a member', async function() {
         try {
@@ -70,8 +69,25 @@ describe('Rewards', function() {
 
         expect(parseInt(amount, 10)).to.equal(50);
     });
+    it('non member cant vote for a reward proposal', async function() {
+        const hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await expect(vote(poll, VOTER, true, 1, sig['signature'])).to.be.revertedWith('NO_MEMBER');
+    });
+    it('can make ' + VOTER + 'a member', async function() {
+        expect(await pool.isMember(VOTER)).to.equal(false);
+        await pool.addMember(VOTER, { from });
+        expect(await pool.isMember(VOTER)).to.equal(true);
+    });
+    it('can vote for a reward proposal', async function() {
+        nonce = await poll.getLatestNonce(VOTER);
+        expect(nonce.eq(0));
 
-    it('can vote for a reward proposal', async () => vote(poll, true));
+        await vote(poll, VOTER, true, 1, sig['signature']);
+
+        nonce = await poll.getLatestNonce(VOTER);
+        expect(nonce.eq(1));
+    });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
@@ -96,7 +112,11 @@ describe('Rewards', function() {
         poll = contract.fromArtifact('RewardPoll', reward.poll);
     });
 
-    it('can vote for a proposal', async () => vote(poll, true));
+    it('can vote for a proposal', async function() {
+        hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await vote(poll, VOTER, true, 1, sig['signature']);
+    });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
@@ -121,7 +141,11 @@ describe('Rewards', function() {
         poll = contract.fromArtifact('RewardPoll', reward.poll);
     });
 
-    it('can vote for a proposal', async () => vote(poll, true));
+    it('can vote for a proposal', async function() {
+        hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await vote(poll, VOTER, true, 1, sig['signature']);
+    });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
 
