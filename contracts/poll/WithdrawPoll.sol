@@ -25,6 +25,7 @@ contract WithdrawPoll is BasePoll, Roles {
      * @param _amount Size of the withdrawal
      * @param _duration Poll duration
      * @param _poolAddress Asset Pool contract address
+     * @param _voteAdmin Address that is able to send signed message to vote and revokeVote
      * @param _tokenAddress ERC20 compatible token contract address
      */
     constructor(
@@ -32,10 +33,11 @@ contract WithdrawPoll is BasePoll, Roles {
         uint256 _amount,
         uint256 _duration,
         address _poolAddress,
+        address _voteAdmin,
         address _tokenAddress
     // warning: the length of the poll is dependent on the time the block is mined.
     // could lead to unexpected business logic.
-    ) public BasePoll(_poolAddress, now, now + _duration) {
+    ) public BasePoll(_poolAddress, _voteAdmin, now, now + _duration) {
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
         beneficiary = _beneficiary;

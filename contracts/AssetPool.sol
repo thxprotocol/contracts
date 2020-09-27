@@ -222,7 +222,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _beneficiary Address of the receiver of the withdrawal
      */
     function _createWithdrawPoll(uint256 _amount, address _beneficiary) internal returns (WithdrawPoll) {
-        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, withdrawPollDuration, address(this), address(token));
+        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, withdrawPollDuration, address(this), owner(), address(token));
 
         emit WithdrawPollCreated(address(poll));
 
@@ -235,7 +235,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the reward
      */
     function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this));
+        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this), owner());
 
         emit RewardPollCreated(_id, _amount, _msgSender());
 
