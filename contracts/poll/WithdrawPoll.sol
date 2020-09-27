@@ -33,9 +33,12 @@ contract WithdrawPoll is BasePoll, Roles {
         uint256 _duration,
         address _poolAddress,
         address _tokenAddress
-    // warning: the length of the poll is dependent on the time the block is mined.
-    // could lead to unexpected business logic.
-    ) public BasePoll(_poolAddress, now, now + _duration) {
+    )
+        public
+        // warning: the length of the poll is dependent on the time the block is mined.
+        // could lead to unexpected business logic.
+        BasePoll(_poolAddress, now, now + _duration)
+    {
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
         beneficiary = _beneficiary;
