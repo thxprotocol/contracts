@@ -1,5 +1,7 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-const { expect } = require('chai');
+const { expect, use } = require('chai');
+const { solidity } = require('ethereum-waffle');
+use(solidity);
 const { vote, timeTravel, finalize, WITHDRAW_POLL_DURATION, VOTER, VOTER_PK } = require('./shared');
 const THXToken = contract.fromArtifact('THXToken');
 const AssetPool = contract.fromArtifact('AssetPool');

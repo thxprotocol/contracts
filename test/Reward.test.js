@@ -1,5 +1,4 @@
-const { expect } = require('chai');
-const { use } = require('chai');
+const { expect, use } = require('chai');
 const { solidity } = require('ethereum-waffle');
 use(solidity);
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
@@ -90,7 +89,6 @@ describe('Reward with voting', function() {
     it('non member cant vote for a reward proposal', async function() {
         const hash = web3.utils.soliditySha3(from, true, 1, poll.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        console.log(VOTER, VOTER_PK);
         await expect(vote(poll, VOTER, true, 1, sig['signature'])).to.be.revertedWith('NO_MEMBER');
     });
     it('can make ' + VOTER + 'a member', async function() {

@@ -1,6 +1,6 @@
 {
-    "name": "upgradable-contracts-demo",
-    "version": "1.0.0",
+    "name": "thx-asset-pools",
+    "version": "0.1.0",
     "description": "",
     "main": "index.js",
     "scripts": {
@@ -8,8 +8,8 @@
         "compile": "npx oz compile --optimizer on",
         "serve": "npm run compile; node index.js"
     },
-    "author": "",
-    "license": "ISC",
+    "author": "Peter Polman",
+    "license": "Apache-2.0",
     "devDependencies": {
         "@openzeppelin/cli": "^2.8.2",
         "@openzeppelin/contracts": "^3.0.2",
