@@ -1,6 +1,6 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
-const { vote, timeTravel, finalize, WITHDRAW_POLL_DURATION } = require('./shared');
+const { vote, timeTravel, finalize, WITHDRAW_POLL_DURATION, VOTER, VOTER_PK } = require('./shared');
 const THXToken = contract.fromArtifact('THXToken');
 const AssetPool = contract.fromArtifact('AssetPool');
 
@@ -81,19 +81,17 @@ describe('Asset Pool', function() {
         expect(reward.address).to.equal(rewardAddress);
     });
     it('non member cant vote for a withdraw proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, reward.address)
-        sig = await web3.eth.accounts.sign(hash, voter_pk);
-        await expect (
-            vote(reward, voter, true, 1, sig["signature"])
-        ).to.be.revertedWith("NO_MEMBER");
+        hash = web3.utils.soliditySha3(from, true, 1, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await expect(vote(reward, VOTER, true, 1, sig['signature'])).to.be.revertedWith('NO_MEMBER');
     });
-    it('can make ' + voter + 'a member', async function() {
-        expect(await pool.isMember(voter)).to.equal(false);
-        await pool.addMember(voter, { from });
-        expect(await pool.isMember(voter)).to.equal(true);
+    it('can make ' + VOTER + 'a member', async function() {
+        expect(await pool.isMember(VOTER)).to.equal(false);
+        await pool.addMember(VOTER, { from });
+        expect(await pool.isMember(VOTER)).to.equal(true);
     });
     it('can vote for a withdraw claim', async function() {
-        await vote(reward, voter, true, 1, sig["signature"])
+        await vote(reward, VOTER, true, 1, sig['signature']);
     });
     it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));

@@ -9,6 +9,8 @@ const {
     REWARD_AMOUNT,
     MINT_AMOUNT,
     DEPOSIT_AMOUNT,
+    VOTER,
+    VOTER_PK,
     vote,
     timeTravel,
     finalize,
@@ -16,17 +18,13 @@ const {
 const THXToken = contract.fromArtifact('THXToken');
 const AssetPool = contract.fromArtifact('AssetPool');
 
-let token = null;
-let pool = null;
-let reward = null;
-let hash = null;
-let sig = null;
-
 describe('Reward with voting', function() {
     const [from] = accounts;
-    voter = "0xaf9d56684466fcFcEA0a2B7fC137AB864d642946";
-    voter_pk = "0x97093724e1748ebfa6aa2d2ec4ec68df8678423ab9a12eb2d27ddc74e35e5db9";
     let owner;
+    let token,
+        pool,
+        reward,
+        sig = null;
 
     before(async () => {
         const amount = web3.utils.toWei('1000');
@@ -90,34 +88,29 @@ describe('Reward with voting', function() {
         expect(amount).to.equal('50');
     });
     it('non member cant vote for a reward proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, poll.address)
-        sig = await web3.eth.accounts.sign(hash, voter_pk);
-        await expect (
-            vote(poll, voter, true, 1, sig["signature"])
-        ).to.be.revertedWith("NO_MEMBER");
+        const hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        console.log(VOTER, VOTER_PK);
+        await expect(vote(poll, VOTER, true, 1, sig['signature'])).to.be.revertedWith('NO_MEMBER');
     });
-    it('can make ' + voter + 'a member', async function() {
-        expect(await pool.isMember(voter)).to.equal(false);
-        await pool.addMember(voter, { from });
-        expect(await pool.isMember(voter)).to.equal(true);
+    it('can make ' + VOTER + 'a member', async function() {
+        expect(await pool.isMember(VOTER)).to.equal(false);
+        await pool.addMember(VOTER, { from });
+        expect(await pool.isMember(VOTER)).to.equal(true);
     });
     it('member can vote for a reward proposal', async function() {
-        await vote(poll, voter, true, 1, sig["signature"])
+        await vote(poll, VOTER, true, 1, sig['signature']);
     });
     it('admin cant publish twice', async function() {
-        await expect (
-            poll.vote(voter, true, 1, sig["signature"], { from })
-        ).to.be.revertedWith("INVALID_NONCE");
+        await expect(poll.vote(VOTER, true, 1, sig['signature'], { from })).to.be.revertedWith('INVALID_NONCE');
     });
     it('admin cant publish twice', async function() {
-        await expect (
-            poll.vote(voter, true, 2, sig["signature"], { from })
-        ).to.be.revertedWith("WRONG_SIG");
+        await expect(poll.vote(VOTER, true, 2, sig['signature'], { from })).to.be.revertedWith('WRONG_SIG');
     });
     it('non-admin is not able to publish vote', async function() {
-        await expect (
-            poll.vote(voter, true, 2, sig["signature"], { from: accounts[2] })
-        ).to.be.revertedWith("caller is not the voteAdmin");
+        await expect(poll.vote(VOTER, true, 2, sig['signature'], { from: accounts[2] })).to.be.revertedWith(
+            'caller is not the voteAdmin',
+        );
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
@@ -147,9 +140,9 @@ describe('Reward with voting', function() {
         expect(web3.utils.fromWei(amount)).to.equal(REWARD_AMOUNT);
     });
     it('can vote for a withdraw claim', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, reward.address)
-        sig = await web3.eth.accounts.sign(hash, voter_pk);
-        await vote(reward, voter, true, 1, sig["signature"])
+        hash = web3.utils.soliditySha3(from, true, 1, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await vote(reward, VOTER, true, 1, sig['signature']);
     });
     it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
     it('can finalize the reward poll', async () => finalize(reward));
