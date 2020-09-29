@@ -23,7 +23,7 @@ contract WithdrawPoll is BasePoll, Roles {
      * @dev WithdrawPoll Constructor
      * @param _beneficiary Beneficiary of the withdrawal
      * @param _amount Size of the withdrawal
-     * @param _duration Poll duration
+     * @param _endtime Poll end time
      * @param _poolAddress Asset Pool contract address
      * @param _voteAdmin Address that is able to send signed message to vote and revokeVote
      * @param _tokenAddress ERC20 compatible token contract address
@@ -31,15 +31,12 @@ contract WithdrawPoll is BasePoll, Roles {
     constructor(
         address _beneficiary,
         uint256 _amount,
-        uint256 _duration,
+        uint256 _endtime,
         address _poolAddress,
         address _voteAdmin,
         address _tokenAddress
     )
-        public
-        // warning: the length of the poll is dependent on the time the block is mined.
-        // could lead to unexpected business logic.
-        BasePoll(_poolAddress, _voteAdmin, now, now + _duration)
+        public BasePoll(_poolAddress, _voteAdmin, now, _endtime)
     {
         // TODO, to discuss, Could be a valid address if pools decide to burn tokens?
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');

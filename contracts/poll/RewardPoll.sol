@@ -17,17 +17,17 @@ contract RewardPoll is BasePoll {
      * @dev RewardPoll constructor
      * @param _id Id of the referenced reward
      * @param _amount Total amount of the reward
-     * @param _duration Poll start time
+     * @param _endtime Poll end time
      * @param _poolAddress Asset Pool contract address
      * @param _voteAdmin Address that is able to send signed message to vote and revokeVote
      */
     constructor(
         uint256 _id,
         uint256 _amount,
-        uint256 _duration,
+        uint256 _endtime,
         address _poolAddress,
         address _voteAdmin
-    ) public BasePoll(_poolAddress, _voteAdmin, now, now + _duration) {
+    ) public BasePoll(_poolAddress, _voteAdmin, now, _endtime) {
         id = _id;
         amount = _amount;
     }

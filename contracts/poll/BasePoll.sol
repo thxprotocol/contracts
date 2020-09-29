@@ -79,6 +79,7 @@ contract BasePoll {
     ) public {
         require(_poolAddress != address(0), 'IS_INVALID_ADDRESS');
         require(_startTime >= now, 'IS_NO_VALID_TIME');
+        require(_endTime >= _startTime, 'IS_NO_VALID_TIME');
 
         pool = IAssetPool(_poolAddress);
 
