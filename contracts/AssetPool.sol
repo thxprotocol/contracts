@@ -125,8 +125,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
         WithdrawPoll withdraw = _createWithdrawPoll(
             rewards[_id].withdrawAmount,
-            msg.sender,
-            rewards[_id].withdrawDuration
+            rewards[_id].withdrawDuration,
+            msg.sender
         );
 
         withdraws.push(withdraw);
@@ -141,8 +141,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
         WithdrawPoll withdraw = _createWithdrawPoll(
             _amount,
-            _beneficiary,
-            proposeWithdrawPollDuration
+            proposeWithdrawPollDuration,
+            _beneficiary
         );
         withdraws.push(withdraw);
     }
@@ -150,10 +150,10 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Starts a withdraw poll.
      * @param _amount Size of the withdrawal
-     * @param _beneficiary Beneficiary of the reward
      * @param _duration The duration the withdraw poll
+     * @param _beneficiary Beneficiary of the reward
      */
-    function _createWithdrawPoll(uint256 _amount, address _beneficiary, uint256 _duration) internal returns (WithdrawPoll) {
+    function _createWithdrawPoll(uint256 _amount, uint256 _duration, address _beneficiary) internal returns (WithdrawPoll) {
         WithdrawPoll poll = new WithdrawPoll(
             _beneficiary,
             _amount,
