@@ -19,7 +19,7 @@ async function log(name, proxy) {
     console.log(name, 'proxy address: ', proxy.options.address);
     console.log(name, 'implementation address:', await getImplementationAddress(proxy.options.address));
     console.log(name, 'reward poll duration: ', await proxy.methods.withdrawPollDuration().call());
-    console.log(name, 'has stored reward: ', await proxy.methods.rewards(0).call());
+    console.log(name, 'has stored withdrawal: ', await proxy.methods.withdraws(0).call());
     console.log('====== END PROXY LOG ======');
 }
 
@@ -36,7 +36,7 @@ async function deployToken(accounts) {
 // Deploys the asset pool
 async function deployPool(accounts, token) {
     const [from] = accounts;
-    const options = { from, gas: 5e6, gasPrice: 1e9 };
+    const options = { from, gas: 6e6, gasPrice: 1e9 };
     const project = new ProxyAdminProject('AssetPoolProject', null, null, options);
     console.log('Asset Pool Admin Project is created');
 
@@ -91,7 +91,7 @@ async function run() {
     await log('* Asset Pool', instance);
     await upgradePool(accounts, project, instance);
 
-    await instance.methods.setWithdawPollDuration(180).send(options);
+    await instance.methods.setWithdrawPollDuration(180).send(options);
     console.log('Set withdrawPollDuration to 180');
 
     await log('* Asset Pool (Upgraded)', instance);
