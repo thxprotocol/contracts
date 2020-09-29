@@ -144,9 +144,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @dev Set the duration for a withdraw poll poll.
      * @param _duration Duration in seconds
      */
-    function setWithdrawPollDuration(uint256 _duration) public {
-        require(_msgSender() == owner(), 'IS_NOT_OWNER');
-
+    function setWithdrawPollDuration(uint256 _duration) public onlyOwner {
         withdrawPollDuration = _duration;
     }
 
@@ -154,9 +152,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @dev Set the reward poll duration
      * @param _duration Duration in seconds
      */
-    function setRewardPollDuration(uint256 _duration) public {
-        require(_msgSender() == owner(), 'IS_NOT_OWNER');
-
+    function setRewardPollDuration(uint256 _duration) public onlyOwner {
         rewardPollDuration = _duration;
     }
 
@@ -164,9 +160,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @dev Creates a reward.
      * @param _amount Initial size for the reward.
      */
-    function addReward(uint256 _amount) public {
-        require(_msgSender() == owner(), 'IS_NOT_OWNER');
-
+    function addReward(uint256 _amount) public onlyOwner {
         Reward memory reward;
 
         reward.id = rewards.length;
@@ -183,9 +177,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _id References reward
      * @param _amount New size for the reward.
      */
-    function updateReward(uint256 _id, uint256 _amount) public {
+    function updateReward(uint256 _id, uint256 _amount) public onlyMember {
         require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
-        require(isMember(_msgSender()), 'IS_NOT_MEMBER');
         require(_amount != rewards[_id].amount, 'IS_EQUAL');
 
         rewards[_id].poll = _createRewardPoll(_id, _amount);

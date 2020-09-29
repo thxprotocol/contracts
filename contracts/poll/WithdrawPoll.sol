@@ -41,6 +41,7 @@ contract WithdrawPoll is BasePoll, Roles {
         // could lead to unexpected business logic.
         BasePoll(_poolAddress, _voteAdmin, now, now + _duration)
     {
+        // TODO, to discuss, Could be a valid address if pools decide to burn tokens?
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
         beneficiary = _beneficiary;
