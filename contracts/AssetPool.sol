@@ -24,7 +24,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     struct Withdrawal {
-        address reward;
+        address withdraw;
         address beneficiary;
         uint256 timestamp;
     }
@@ -222,7 +222,14 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _beneficiary Address of the receiver of the withdrawal
      */
     function _createWithdrawPoll(uint256 _amount, address _beneficiary) internal returns (WithdrawPoll) {
-        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, withdrawPollDuration, address(this), owner(), address(token));
+        WithdrawPoll poll = new WithdrawPoll(
+            _beneficiary,
+            _amount,
+            withdrawPollDuration,
+            address(this),
+            owner(),
+            address(token)
+        );
 
         emit WithdrawPollCreated(address(poll));
 
@@ -248,6 +255,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _agree Bool for checking the result of the poll
      */
     function onWithdrawPollFinish(address _withdraw, bool _agree) external {
+        require(_withdraw == _msgSender());
+
         emit WithdrawPollFinished(_withdraw, _agree);
     }
 
@@ -262,6 +271,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 _amount,
         bool _agree
     ) external {
+        require(address(rewards[_id].poll) == _msgSender());
+
         if (_agree) {
             rewards[_id].amount = _amount;
 
@@ -277,21 +288,23 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev callback called after a withdraw
-     * @param _reward Address of the reward
+     * @param _withdraw Address of the withdrawal
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
      */
     function onWithdrawal(
-        address _reward,
+        address _withdraw,
         address _beneficiary,
         uint256 _amount
     ) external {
+        require(_withdraw == _msgSender());
+
         token.transfer(_beneficiary, _amount);
 
         Withdrawal memory w;
 
         w.beneficiary = _beneficiary;
-        w.reward = _reward;
+        w.withdraw = _withdraw;
         w.timestamp = now;
 
         withdrawalsOf[_beneficiary].push(w);
