@@ -23,28 +23,11 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 updated;
     }
 
-    struct Withdrawal {
-        address withdraw;
-        address beneficiary;
-        uint256 timestamp;
-    }
-
-    struct Deposit {
-        address member;
-        uint256 amount;
-        uint256 timestamp;
-    }
-
     Reward[] public rewards;
     WithdrawPoll[] public withdraws;
-    Deposit[] public deposits;
 
     uint256 public withdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
-
-    mapping(address => Deposit[]) public depositsOf;
-    mapping(address => Withdrawal[]) public withdrawalsOf;
-    mapping(address => WithdrawPoll[]) public withdrawalPollsOf;
 
     IERC20 public token;
 
@@ -52,13 +35,10 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
     enum RewardState { Disabled, Enabled }
 
-    event Withdrawn(address indexed beneficiary, uint256 reward);
-    event Deposited(address indexed sender, uint256 amount);
-    event RewardPollCreated(uint256 id, uint256 proposal, address account);
-    event RewardPollFinished(uint256 id, uint256 proposal, bool agree);
-    event RewardUpdated(uint256 id, RewardState state, uint256 amount);
-    event WithdrawPollCreated(address reward);
-    event WithdrawPollFinished(address reward, bool agree);
+    event Withdrawn(address indexed member, uint256 reward);
+    event Deposited(address indexed member, uint256 amount);
+    event RewardPollCreated(address indexed member, address poll, uint256 id, uint256 proposal);
+    event WithdrawPollCreated(address indexed member, address poll);
 
     /**
      * @dev Initializes the asset pool and sets the owner. Called when contract upgrades are available.
@@ -75,51 +55,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     }
 
     /**
-     * @dev Get the total amount of deposits in this pool
-     */
-    function getDepositCount() public view returns (uint256) {
-        return deposits.length;
-    }
-
-    /**
-     * @dev Get the total amount of withdraws in this pool
-     */
-    function getWithdrawCount() public view returns (uint256) {
-        return withdraws.length;
-    }
-
-    /**
-     * @dev Get the total amount of rewards in this pool
-     */
-    function getRewardCount() public view returns (uint256) {
-        return rewards.length;
-    }
-
-    /**
-     * @dev Get the amount of deposits for a given address
-     * @param _member Address of the sender of deposits
-     */
-    function getDepositCountOf(address _member) public view returns (uint256) {
-        return depositsOf[_member].length;
-    }
-
-    /**
-     * @dev Get the amount of withdraws for a given address
-     * @param _member Address of the sender of withdraws
-     */
-    function getWithdrawalCount(address _member) public view returns (uint256) {
-        return withdrawalsOf[_member].length;
-    }
-
-    /**
-     * @dev Get the amount of withdrawalPolls for a given address
-     * @param _member Address of the sender of deposits
-     */
-    function getWithdrawPollsCountOf(address _member) public view returns (uint256) {
-        return withdrawalPollsOf[_member].length;
-    }
-
-    /**
      * @dev Store a deposit in the contract. The tx should be approved prior to calling this method.
      * @param _amount Size of the deposit
      */
@@ -127,15 +62,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         require(token.balanceOf(_msgSender()) >= _amount, 'INSUFFICIENT_BALANCE');
 
         token.transferFrom(_msgSender(), address(this), _amount);
-
-        Deposit memory d;
-
-        d.amount = _amount;
-        d.member = _msgSender();
-        d.timestamp = now;
-
-        deposits.push(d);
-        depositsOf[_msgSender()].push(d);
 
         emit Deposited(_msgSender(), _amount);
     }
@@ -201,7 +127,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         WithdrawPoll withdraw = _createWithdrawPoll(rewards[_id].amount, _msgSender());
 
         withdraws.push(withdraw);
-        withdrawalPollsOf[_msgSender()].push(withdraw);
     }
 
     /**
@@ -211,9 +136,9 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
+
         WithdrawPoll withdraw = _createWithdrawPoll(_amount, _beneficiary);
         withdraws.push(withdraw);
-        withdrawalPollsOf[_beneficiary].push(withdraw);
     }
 
     /**
@@ -231,7 +156,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
             address(token)
         );
 
-        emit WithdrawPollCreated(address(poll));
+        emit WithdrawPollCreated(_beneficiary, address(poll));
 
         return poll;
     }
@@ -244,20 +169,9 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
         RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this), owner());
 
-        emit RewardPollCreated(_id, _amount, _msgSender());
+        emit RewardPollCreated(_msgSender(), address(poll), _id, _amount);
 
         return poll;
-    }
-
-    /**
-     * @dev Called when poll is finished
-     * @param _withdraw Address of withdrawPoll
-     * @param _agree Bool for checking the result of the poll
-     */
-    function onWithdrawPollFinish(address _withdraw, bool _agree) external {
-        require(_withdraw == _msgSender());
-
-        emit WithdrawPollFinished(_withdraw, _agree);
     }
 
     /**
@@ -282,8 +196,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
                 rewards[_id].state = RewardState.Disabled;
             }
         }
-
-        emit RewardPollFinished(_id, _amount, _agree);
     }
 
     /**
@@ -300,14 +212,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         require(_withdraw == _msgSender());
 
         token.transfer(_beneficiary, _amount);
-
-        Withdrawal memory w;
-
-        w.beneficiary = _beneficiary;
-        w.withdraw = _withdraw;
-        w.timestamp = now;
-
-        withdrawalsOf[_beneficiary].push(w);
 
         emit Withdrawn(_beneficiary, _amount);
     }

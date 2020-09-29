@@ -8,11 +8,11 @@ pragma solidity ^0.6.4;
  * @dev Fund callbacks used by polling contracts
  */
 interface IAssetPool {
-
-     /**
+    /**
      * @dev Check if an address is a pool member
      */
     function isMember(address) external view returns (bool);
+
     /**
      * @dev RewardPoll callback
      * @param _id The referenced reward
@@ -24,13 +24,6 @@ interface IAssetPool {
         uint256 _amount,
         bool _agree
     ) external;
-
-    /**
-     * @dev WithdrawPoll callback
-     * @param _reward Address of the referenced reward
-     * @param _agree True if the reward should apply or change
-     */
-    function onWithdrawPollFinish(address _reward, bool _agree) external;
 
     /**
      * @dev Withdrawal callback
