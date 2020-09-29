@@ -55,7 +55,7 @@ contract WithdrawPoll is BasePoll, Roles {
      */
     function withdraw() public {
         require(state == WithdrawState.Approved, 'IS_NOT_APPROVED');
-        require(_msgSender() == beneficiary, 'IS_NOT_BENEFICIARY');
+        require(msg.sender == beneficiary, 'IS_NOT_BENEFICIARY');
         // check below could be deleted to save gast costs, as onWithdrawal will fail
         // if the balance is insufficient.
         require(token.balanceOf(address(pool)) >= amount, 'INSUFFICIENT_BALANCE');

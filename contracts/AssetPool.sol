@@ -124,20 +124,20 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the deposit
      */
     function deposit(uint256 _amount) public onlyMember {
-        require(token.balanceOf(_msgSender()) >= _amount, 'INSUFFICIENT_BALANCE');
+        require(token.balanceOf(msg.sender) >= _amount, 'INSUFFICIENT_BALANCE');
 
-        token.transferFrom(_msgSender(), address(this), _amount);
+        token.transferFrom(msg.sender, address(this), _amount);
 
         Deposit memory d;
 
         d.amount = _amount;
-        d.member = _msgSender();
+        d.member = msg.sender;
         d.timestamp = now;
 
         deposits.push(d);
-        depositsOf[_msgSender()].push(d);
+        depositsOf[msg.sender].push(d);
 
-        emit Deposited(_msgSender(), _amount);
+        emit Deposited(msg.sender, _amount);
     }
 
     /**
@@ -191,10 +191,10 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     function claimWithdraw(uint256 _id) public onlyMember {
         require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
 
-        WithdrawPoll withdraw = _createWithdrawPoll(rewards[_id].amount, _msgSender());
+        WithdrawPoll withdraw = _createWithdrawPoll(rewards[_id].amount, msg.sender);
 
         withdraws.push(withdraw);
-        withdrawalPollsOf[_msgSender()].push(withdraw);
+        withdrawalPollsOf[msg.sender].push(withdraw);
     }
 
     /**
@@ -237,7 +237,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
         RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this), owner());
 
-        emit RewardPollCreated(_id, _amount, _msgSender());
+        emit RewardPollCreated(_id, _amount, msg.sender);
 
         return poll;
     }
@@ -248,7 +248,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _agree Bool for checking the result of the poll
      */
     function onWithdrawPollFinish(address _withdraw, bool _agree) external {
-        require(_withdraw == _msgSender());
+        require(_withdraw == msg.sender);
 
         emit WithdrawPollFinished(_withdraw, _agree);
     }
@@ -264,7 +264,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 _amount,
         bool _agree
     ) external {
-        require(address(rewards[_id].poll) == _msgSender());
+        require(address(rewards[_id].poll) == msg.sender);
 
         if (_agree) {
             rewards[_id].amount = _amount;
@@ -290,7 +290,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         address _beneficiary,
         uint256 _amount
     ) external {
-        require(_withdraw == _msgSender());
+        require(_withdraw == msg.sender);
 
         token.transfer(_beneficiary, _amount);
 
