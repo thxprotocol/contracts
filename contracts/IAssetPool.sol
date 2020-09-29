@@ -16,12 +16,14 @@ interface IAssetPool {
     /**
      * @dev RewardPoll callback
      * @param _id The referenced reward
-     * @param _amount The proposed reward size
+     * @param _withdrawAmount The proposed reward size
+     * @param _withdrawDuration The proposed reward size
      * @param _agree True if the reward should apply or change
      */
     function onRewardPollFinish(
         uint256 _id,
-        uint256 _amount,
+        uint256 _withdrawAmount,
+        uint256 _withdrawDuration,
         bool _agree
     ) external;
 

@@ -4,8 +4,8 @@ use(solidity);
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
     REWARD_POLL_DURATION,
-    WITHDRAW_POLL_DURATION,
-    REWARD_AMOUNT,
+    PROPOSE_WITHDRAW_POLL_DURATION,
+    WITHDRAW_AMOUNT,
     MINT_AMOUNT,
     DEPOSIT_AMOUNT,
     VOTER,
@@ -57,21 +57,22 @@ describe('Reward with voting', function() {
     });
 
     it('can configure the reward and reward poll durations', async function() {
-        await pool.setWithdrawPollDuration(WITHDRAW_POLL_DURATION, { from });
+        await pool.setProposeWithdrawPollDuration(PROPOSE_WITHDRAW_POLL_DURATION, { from });
         await pool.setRewardPollDuration(REWARD_POLL_DURATION, { from });
 
-        expect(parseInt(await pool.withdrawPollDuration(), 10)).to.equal(WITHDRAW_POLL_DURATION);
+        expect(parseInt(await pool.proposeWithdrawPollDuration(), 10)).to.equal(PROPOSE_WITHDRAW_POLL_DURATION);
         expect(parseInt(await pool.rewardPollDuration(), 10)).to.equal(REWARD_POLL_DURATION);
     });
 
-    it('can create a reward with size ' + REWARD_AMOUNT, async function() {
-        const rewardAmount = web3.utils.toWei(REWARD_AMOUNT, 'ether');
+    it('can create a reward with size ' + WITHDRAW_AMOUNT, async function() {
+        const withdrawAmount = web3.utils.toWei(WITHDRAW_AMOUNT, 'ether');
 
-        await pool.addReward(rewardAmount, { from });
+        await pool.addReward(withdrawAmount, 180, { from });
 
         const reward = await pool.rewards(0);
 
-        expect(reward.amount.toString()).to.equal('0');
+        expect(reward.withdrawAmount.toString()).to.equal('0');
+        expect(reward.withdrawDuration.toString()).to.equal('0');
         expect(reward.state.toString()).to.equal('0');
     });
 
@@ -82,10 +83,12 @@ describe('Reward with voting', function() {
 
         expect(poll.address).to.equal(reward.poll);
 
-        let amount = await poll.amount();
+        let amount = await poll.withdrawAmount();
         amount = web3.utils.fromWei(amount);
-
         expect(amount).to.equal('50');
+
+        let duration = await poll.withdrawDuration();
+        expect(duration.toString()).to.equal('180');
     });
     it('non member cant vote for a reward proposal', async function() {
         const hash = web3.utils.soliditySha3(from, true, 1, poll.address);
@@ -119,7 +122,8 @@ describe('Reward with voting', function() {
     it('can read the enabled reward amount', async function() {
         const reward = await pool.rewards(0);
 
-        expect(web3.utils.fromWei(reward.amount)).to.equal(REWARD_AMOUNT);
+        expect(web3.utils.fromWei(reward.withdrawAmount)).to.equal(WITHDRAW_AMOUNT);
+        expect(reward.withdrawDuration.toString()).to.equal('180');
         expect(reward.state.toString()).to.equal('1');
     });
 
@@ -136,14 +140,16 @@ describe('Reward with voting', function() {
         const amount = await reward.amount();
 
         expect(beneficiary).to.equal(from);
-        expect(web3.utils.fromWei(amount)).to.equal(REWARD_AMOUNT);
+        expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
     it('can vote for a withdraw claim', async function() {
         hash = web3.utils.soliditySha3(from, true, 1, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
         await vote(reward, VOTER, true, 1, sig['signature']);
     });
-    it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
+    it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
+        timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),
+    );
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
         const oldBeneficiaryBalance = await token.balanceOf(from);
@@ -194,21 +200,22 @@ describe('Reward without voting', function() {
     });
 
     it('can configure the reward and reward poll durations', async function() {
-        await pool.setWithdrawPollDuration(0, { from });
+        await pool.setProposeWithdrawPollDuration(0, { from });
         await pool.setRewardPollDuration(0, { from });
 
-        expect(parseInt(await pool.withdrawPollDuration(), 10)).to.equal(0);
+        expect(parseInt(await pool.proposeWithdrawPollDuration(), 10)).to.equal(0);
         expect(parseInt(await pool.rewardPollDuration(), 10)).to.equal(0);
     });
 
-    it('can create a reward with size ' + REWARD_AMOUNT, async function() {
-        const rewardAmount = web3.utils.toWei(REWARD_AMOUNT, 'ether');
+    it('can create a reward with size ' + WITHDRAW_AMOUNT, async function() {
+        const withdrawAmount = web3.utils.toWei(WITHDRAW_AMOUNT, 'ether');
 
-        await pool.addReward(rewardAmount, { from });
+        await pool.addReward(withdrawAmount, 0, { from });
 
         const reward = await pool.rewards(0);
 
-        expect(reward.amount.toString()).to.equal('0');
+        expect(reward.withdrawAmount.toString()).to.equal('0');
+        expect(reward.withdrawDuration.toString()).to.equal('0');
         expect(reward.state.toString()).to.equal('0');
     });
 
@@ -219,9 +226,11 @@ describe('Reward without voting', function() {
 
         expect(poll.address).to.equal(reward.poll);
 
-        const amount = await poll.amount();
-
+        const amount = await poll.withdrawAmount();
         expect(web3.utils.fromWei(amount)).to.equal('50');
+
+        const duration = await poll.withdrawDuration();
+        expect(duration.toString()).to.equal('0');
     });
 
     it('can finalize the reward poll', async () => finalize(poll));
@@ -229,7 +238,8 @@ describe('Reward without voting', function() {
     it('can read the enabled reward amount', async function() {
         const reward = await pool.rewards(0);
 
-        expect(web3.utils.fromWei(reward.amount)).to.equal(REWARD_AMOUNT);
+        expect(web3.utils.fromWei(reward.withdrawAmount)).to.equal(WITHDRAW_AMOUNT);
+        expect(reward.withdrawDuration.toString()).to.equal('0');
         expect(reward.state.toString()).to.equal('1');
     });
 
@@ -246,7 +256,7 @@ describe('Reward without voting', function() {
         const amount = await reward.amount();
 
         expect(beneficiary).to.equal(from);
-        expect(web3.utils.fromWei(amount)).to.equal(REWARD_AMOUNT);
+        expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
 
     it('can finalize the reward poll', async () => finalize(reward));

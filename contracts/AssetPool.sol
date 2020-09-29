@@ -17,7 +17,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
     struct Reward {
         uint256 id;
-        uint256 amount;
+        uint256 withdrawAmount;
+        uint256 withdrawDuration;
         RewardState state;
         RewardPoll poll;
         uint256 updated;
@@ -26,7 +27,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     Reward[] public rewards;
     WithdrawPoll[] public withdraws;
 
-    uint256 public withdrawPollDuration = 0;
+    uint256 public proposeWithdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
 
     IERC20 public token;
@@ -70,8 +71,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @dev Set the duration for a withdraw poll poll.
      * @param _duration Duration in seconds
      */
-    function setWithdrawPollDuration(uint256 _duration) public onlyOwner {
-        withdrawPollDuration = _duration;
+    function setProposeWithdrawPollDuration(uint256 _duration) public onlyOwner {
+        proposeWithdrawPollDuration = _duration;
     }
 
     /**
@@ -84,15 +85,19 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
     /**
      * @dev Creates a reward.
-     * @param _amount Initial size for the reward.
+     * @param _withdrawAmount Initial size for the reward.
+     * @param _withdrawDuration Initial duration for the reward.
      */
-    function addReward(uint256 _amount) public onlyOwner {
+    function addReward(uint256 _withdrawAmount, uint256 _withdrawDuration) public onlyOwner {
         Reward memory reward;
 
         reward.id = rewards.length;
-        reward.amount = 0;
         reward.state = RewardState.Disabled;
-        reward.poll = _createRewardPoll(rewards.length, _amount);
+        reward.poll = _createRewardPoll(
+            rewards.length,
+            _withdrawAmount,
+            _withdrawDuration
+        );
         reward.updated = now;
 
         rewards.push(reward);
@@ -101,13 +106,14 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Updates a reward poll
      * @param _id References reward
-     * @param _amount New size for the reward.
+     * @param _withdrawAmount New size for the reward.
+     * @param _withdrawDuration New duration of the reward
      */
-    function updateReward(uint256 _id, uint256 _amount) public onlyMember {
+    function updateReward(uint256 _id, uint256 _withdrawAmount, uint256 _withdrawDuration) public onlyMember {
         require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
-        require(_amount != rewards[_id].amount, 'IS_EQUAL');
+        require(_withdrawAmount != rewards[_id].withdrawAmount, 'IS_EQUAL');
 
-        rewards[_id].poll = _createRewardPoll(_id, _amount);
+        rewards[_id].poll = _createRewardPoll(_id, _withdrawAmount, _withdrawDuration);
     }
 
     /**
@@ -117,7 +123,11 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     function claimWithdraw(uint256 _id) public onlyMember {
         require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
 
-        WithdrawPoll withdraw = _createWithdrawPoll(rewards[_id].amount, msg.sender);
+        WithdrawPoll withdraw = _createWithdrawPoll(
+            rewards[_id].withdrawAmount,
+            msg.sender,
+            rewards[_id].withdrawDuration
+        );
 
         withdraws.push(withdraw);
     }
@@ -129,21 +139,25 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
-
-        WithdrawPoll withdraw = _createWithdrawPoll(_amount, _beneficiary);
+        WithdrawPoll withdraw = _createWithdrawPoll(
+            _amount,
+            _beneficiary,
+            proposeWithdrawPollDuration
+        );
         withdraws.push(withdraw);
     }
 
     /**
      * @dev Starts a withdraw poll.
      * @param _amount Size of the withdrawal
-     * @param _beneficiary Address of the receiver of the withdrawal
+     * @param _beneficiary Beneficiary of the reward
+     * @param _duration The duration the withdraw poll
      */
-    function _createWithdrawPoll(uint256 _amount, address _beneficiary) internal returns (WithdrawPoll) {
+    function _createWithdrawPoll(uint256 _amount, address _beneficiary, uint256 _duration) internal returns (WithdrawPoll) {
         WithdrawPoll poll = new WithdrawPoll(
             _beneficiary,
             _amount,
-            withdrawPollDuration,
+            _duration,
             address(this),
             owner(),
             address(token)
@@ -157,33 +171,34 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Starts a reward poll and stores the address of the poll.
      * @param _id Referenced reward
-     * @param _amount Size of the reward
+     * @param _withdrawAmount Size of the reward
+     * @param _withdrawDuration Duration of the reward poll
      */
-    function _createRewardPoll(uint256 _id, uint256 _amount) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(_id, _amount, rewardPollDuration, address(this), owner());
-
-        emit RewardPollCreated(msg.sender, address(poll), _id, _amount);
-
+    function _createRewardPoll(uint256 _id, uint256 _withdrawAmount, uint256 _withdrawDuration) internal returns (RewardPoll) {
+        RewardPoll poll = new RewardPoll(_id, _withdrawAmount, _withdrawDuration, rewardPollDuration, address(this), owner());
         return poll;
     }
 
     /**
      * @dev Called when poll is finished
      * @param _id id of reward
-     * @param _amount New amount for the reward
+     * @param _withdrawAmount New amount for the reward
+     * @param _withdrawDuration New duration for the reward
      * @param _agree Bool for checking the result of the poll
      */
     function onRewardPollFinish(
         uint256 _id,
-        uint256 _amount,
+        uint256 _withdrawAmount,
+        uint256 _withdrawDuration,
         bool _agree
     ) external {
         require(address(rewards[_id].poll) == msg.sender);
 
         if (_agree) {
-            rewards[_id].amount = _amount;
+            rewards[_id].withdrawAmount = _withdrawAmount;
+            rewards[_id].withdrawDuration = _withdrawDuration;
 
-            if (_amount > 0) {
+            if (_withdrawAmount > 0) {
                 rewards[_id].state = RewardState.Enabled;
             } else {
                 rewards[_id].state = RewardState.Disabled;

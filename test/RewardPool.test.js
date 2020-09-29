@@ -7,7 +7,7 @@ const {
     timeTravel,
     finalize,
     withdrawPollCreatedEvent,
-    WITHDRAW_POLL_DURATION,
+    PROPOSE_WITHDRAW_POLL_DURATION,
     VOTER,
     VOTER_PK,
 } = require('./shared');
@@ -50,17 +50,17 @@ describe('Asset Pool', function() {
     });
 
     it('expects the initial duration to be 0', async function() {
-        const duration = await pool.withdrawPollDuration();
+        const duration = await pool.proposeWithdrawPollDuration();
 
         expect(parseInt(duration, 10)).to.equal(0);
     });
 
-    it('can set the reward poll duration to ' + WITHDRAW_POLL_DURATION + ' seconds', async function() {
-        await pool.setWithdrawPollDuration(WITHDRAW_POLL_DURATION, { from });
+    it('can set the reward poll duration to ' + PROPOSE_WITHDRAW_POLL_DURATION + ' seconds', async function() {
+        await pool.setProposeWithdrawPollDuration(PROPOSE_WITHDRAW_POLL_DURATION, { from });
 
-        const duration = await pool.withdrawPollDuration();
+        const duration = await pool.proposeWithdrawPollDuration();
 
-        expect(duration.toNumber()).to.equal(WITHDRAW_POLL_DURATION);
+        expect(duration.toNumber()).to.equal(PROPOSE_WITHDRAW_POLL_DURATION);
     });
 
     it('can make ' + accounts[1] + 'a member', async function() {
@@ -103,7 +103,9 @@ describe('Asset Pool', function() {
     it('can vote for a withdraw claim', async function() {
         await vote(withdrawal, VOTER, true, 1, sig['signature']);
     });
-    it('can travel ' + WITHDRAW_POLL_DURATION + 's in time', async () => timeTravel(WITHDRAW_POLL_DURATION / 60));
+    it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
+        timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),
+    );
     it('can finalize the reward poll', async () => finalize(withdrawal));
     it('can withdraw the reward', async function() {
         const oldBeneficiaryBalance = await token.balanceOf(accounts[1]);
