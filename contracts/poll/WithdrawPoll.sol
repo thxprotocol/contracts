@@ -74,7 +74,5 @@ contract WithdrawPoll is BasePoll, Roles {
         } else {
             state = WithdrawState.Rejected;
         }
-
-        pool.onWithdrawPollFinish(address(this), agree);
     }
 }

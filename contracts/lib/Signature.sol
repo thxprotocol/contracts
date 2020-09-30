@@ -1,13 +1,16 @@
 pragma solidity ^0.6.4;
 
 library Signature {
-
     // Signature methods
 
     function splitSignature(bytes memory sig)
         internal
         pure
-        returns (uint8, bytes32, bytes32)
+        returns (
+            uint8,
+            bytes32,
+            bytes32
+        )
     {
         require(sig.length == 65);
 
@@ -27,11 +30,7 @@ library Signature {
         return (v, r, s);
     }
 
-    function recoverSigner(bytes32 message, bytes calldata sig)
-        internal
-        pure
-        returns (address)
-    {
+    function recoverSigner(bytes32 message, bytes memory sig) internal pure returns (address) {
         uint8 v;
         bytes32 r;
         bytes32 s;
@@ -43,6 +42,6 @@ library Signature {
 
     // Builds a prefixed hash to mimic the behavior of eth_sign.
     function prefixed(bytes32 hash) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return keccak256(abi.encodePacked('\x19Ethereum Signed Message:\n32', hash));
     }
 }

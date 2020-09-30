@@ -27,7 +27,7 @@ contract BasePoll {
     uint256 public noCounter = 0;
     uint256 public totalVoted = 0;
 
-    bool public bypassVotes = true;
+    bool public bypassVotes = false;
     bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
@@ -39,9 +39,7 @@ contract BasePoll {
     }
 
     modifier onlyVoteAdmin() {
-        require(
-            msg.sender == voteAdmin, 'caller is not the voteAdmin'
-        );
+        require(msg.sender == voteAdmin, 'caller is not the voteAdmin');
         _;
     }
 
@@ -52,10 +50,11 @@ contract BasePoll {
 
     modifier useNonce(address _voter, uint256 _nonce) {
         uint256 lastNonce = memberNonces[_voter];
-        require(lastNonce + 1 == _nonce, "INVALID_NONCE");
+        require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
         memberNonces[_voter] = _nonce;
         _;
     }
+
     /**
      * @dev Get the latest nonce of a given voter
      * @param _voter Address of the voter
@@ -98,14 +97,23 @@ contract BasePoll {
      * @param _nonce Number only used once
      * @param _sig The signed parameters
      */
-    function vote(address _voter, bool _agree, uint256 _nonce, bytes calldata _sig)
-    // _voter parameter can be removed. as _voter is recoverd with recoverSigner.
-    // but _voter is currently used by useNonce for readability.
-    external checkTime onlyVoteAdmin useNonce(_voter, _nonce) {
+    function vote(
+        address _voter,
+        bool _agree,
+        uint256 _nonce,
+        bytes calldata _sig
+    )
+        external
+        // _voter parameter can be removed. as _voter is recoverd with recoverSigner.
+        // but _voter is currently used by useNonce for readability.
+        checkTime
+        onlyVoteAdmin
+        useNonce(_voter, _nonce)
+    {
         bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _agree, _nonce, this)));
-        require(Signature.recoverSigner(message, _sig) == _voter, "WRONG_SIG");
+        require(Signature.recoverSigner(message, _sig) == _voter, 'WRONG_SIG');
         require(votesByAddress[_voter].time == 0, 'HAS_VOTED');
-        require(pool.isMember(_voter), "NO_MEMBER");
+        require(pool.isMember(_voter), 'NO_MEMBER');
 
         uint256 voiceWeight = 1;
 
@@ -128,8 +136,11 @@ contract BasePoll {
      * @param _nonce Number only used once
      * @param _sig The signed parameters
      */
-    function revokeVote(address _voter, uint256 _nonce, bytes calldata _sig)
-    external checkTime onlyVoteAdmin useNonce(_voter, _nonce) {
+    function revokeVote(
+        address _voter,
+        uint256 _nonce,
+        bytes calldata _sig
+    ) external checkTime onlyVoteAdmin useNonce(_voter, _nonce) {
         bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _nonce, this)));
         require(Signature.recoverSigner(message, _sig) == _voter);
         require(votesByAddress[_voter].time > 0, 'HAS_NOT_VOTED');
