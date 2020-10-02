@@ -1,6 +1,6 @@
 # THX - Asset Pool
 
-This repository holds the smart contracts used within the THX ecosystem. This document should provide more information about the configuration and governance of a asset pool. It also lists the tests for features in the contracts, explains the upgradability and references to the implemented Open Zeppelin standard contracts.
+This repository holds the smart contracts used within the THX ecosystem. This document should provide more information about the configuration and governance of an asset pool. It also lists the tests for features in the contracts, explains the upgradability, and references to the implemented Open Zeppelin standard contracts.
 
 ## Testing
 
@@ -54,7 +54,7 @@ Make sure to have a local RPC running at `http://localhost:7545` and run `yarn s
 // AssetPoolV2 and compile it.
 ```
 
-Output should be something like this:
+The output should be something like this:
 
 ```
 Asset Pool Admin Project is created
@@ -82,16 +82,16 @@ Set withdrawPollDuration to 180
 
 ## OpenZeppelin
 
-This sections described the Open Zeppelin standard contracts that are used in the THX contract layer.
+This section described the Open Zeppelin standard contracts that are used in the THX contract layer.
 
 ### [ERC20 Token](https://docs.openzeppelin.com/contracts/3.x/erc20)
 
-THXToken inherits all logic from this standard contract and adds some logic for integration with the Transfer Gateway. THXTokenRinkeby is the ERC20 contract that is actually deployed on Ethereum networks (Rinkeby as of today).
+THXToken inherits all logic from this standard contract and adds some logic for integration with the Transfer Gateway. THXTokenRinkeby is the ERC20 contract that is deployed on Ethereum networks (Rinkeby as of today).
 
 ### [Ownable](https://docs.openzeppelin.com/contracts/3.x/access-control)
 
-AssetPool is derived from the Ownable smart contract and inherits ownership features. Usefull when transfering ownership of a pool and restricting breaking mutations to the smart contracts. Also a necessity for the upgradability of the contract. [Read more about upgradability](#Upgrades).
+AssetPool is derived from the Ownable smart contract and inherits ownership features. Useful when transferring ownership of a pool and restricting breaking mutations to the smart contracts. Also a necessity for the upgradability of the contract. [Read more about upgradability](#Upgrades).
 
 ### [Access Control](https://docs.openzeppelin.com/contracts/3.x/access-control)
 
-AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of a asset pool and allow them to claim withdrawals and vote on reward proposals.
+AccessControl is used to create MEMBER_ROLE and MANAGER_ROLE. MEMBER_ROLE is used to identify members of an asset pool and allow them to claim withdrawals and vote on reward proposals.

@@ -10,6 +10,7 @@ const {
     DEPOSIT_AMOUNT,
     VOTER,
     VOTER_PK,
+    withdrawPollCreatedEvent,
     vote,
     timeTravel,
     finalize,
@@ -127,7 +128,7 @@ describe('Reward with voting', function() {
 
         await pool.claimWithdraw(0, { from });
 
-        const withdrawPollAddress = await pool.withdrawalPollsOf(from, 0, { from });
+        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
 
         reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
@@ -237,7 +238,7 @@ describe('Reward without voting', function() {
 
         await pool.claimWithdraw(0, { from });
 
-        const withdrawPollAddress = await pool.withdrawalPollsOf(from, 0, { from });
+        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
 
         reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
