@@ -50,11 +50,12 @@ describe('Rewards', function() {
     });
 
     it('can create a reward with size 50 as the pool owner', async function() {
-        await pool.addReward(50, { from });
+        await pool.addReward(50, 180, { from });
 
         const reward = await pool.rewards(0);
 
-        expect(parseInt(reward.amount, 10)).to.equal(0);
+        expect(parseInt(reward.withdrawAmount, 10)).to.equal(0);
+        expect(parseInt(reward.withdrawDuration, 10)).to.equal(0);
         expect(parseInt(reward.state, 10)).to.equal(0);
     });
 
@@ -65,9 +66,11 @@ describe('Rewards', function() {
 
         expect(poll.address).to.equal(reward.poll);
 
-        const amount = await poll.amount();
+        const amount = await poll.withdrawAmount();
+        const duration = await poll.withdrawDuration();
 
         expect(parseInt(amount, 10)).to.equal(50);
+        expect(parseInt(duration, 10)).to.equal(180);
     });
     it('non member cant vote for a reward proposal', async function() {
         const hash = web3.utils.soliditySha3(from, true, 1, poll.address);
@@ -96,14 +99,15 @@ describe('Rewards', function() {
     it('can read the enabled reward amount', async function() {
         const reward = await pool.rewards(0);
 
-        expect(parseInt(reward.amount, 10)).to.equal(50);
+        expect(parseInt(reward.withdrawAmount, 10)).to.equal(50);
+        expect(parseInt(reward.withdrawDuration, 10)).to.equal(180);
         expect(parseInt(reward.state, 10)).to.equal(1);
     });
 
     it('can update the reward for a reward size of 100', async function() {
         let reward = await pool.rewards(0);
 
-        await pool.updateReward(0, 100, { from });
+        await pool.updateReward(0, 100, 300, { from });
 
         reward = await pool.rewards(0);
 
@@ -125,14 +129,15 @@ describe('Rewards', function() {
     it('can read the enabled amount', async function() {
         const reward = await pool.rewards(0);
 
-        expect(parseInt(reward.amount, 10)).to.equal(100);
+        expect(parseInt(reward.withdrawAmount, 10)).to.equal(100);
+        expect(parseInt(reward.withdrawDuration, 10)).to.equal(300);
         expect(parseInt(reward.state, 10)).to.equal(1);
     });
 
     it('can disable a reward', async function() {
         let reward = await pool.rewards(0);
 
-        await pool.updateReward(0, 0, { from });
+        await pool.updateReward(0, 0, 180, { from });
 
         reward = await pool.rewards(0);
 
