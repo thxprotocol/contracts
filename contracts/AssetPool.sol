@@ -154,7 +154,14 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 _duration,
         address _beneficiary
     ) internal returns (WithdrawPoll) {
-        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, _duration, address(this), owner(), address(token));
+        WithdrawPoll poll = new WithdrawPoll(
+            _beneficiary,
+            _amount,
+            now + _duration,
+            address(this),
+            owner(),
+            address(token)
+        );
 
         emit WithdrawPollCreated(_beneficiary, address(poll));
 
@@ -176,7 +183,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
             _id,
             _withdrawAmount,
             _withdrawDuration,
-            rewardPollDuration,
+            now + rewardPollDuration,
             address(this),
             owner()
         );
