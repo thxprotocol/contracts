@@ -157,7 +157,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         WithdrawPoll poll = new WithdrawPoll(
             _beneficiary,
             _amount,
-            now + withdrawPollDuration,
+            now + _duration,
             address(this),
             owner(),
             address(token)
