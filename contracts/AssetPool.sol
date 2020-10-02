@@ -93,11 +93,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
 
         reward.id = rewards.length;
         reward.state = RewardState.Disabled;
-        reward.poll = _createRewardPoll(
-            rewards.length,
-            _withdrawAmount,
-            _withdrawDuration
-        );
+        reward.poll = _createRewardPoll(rewards.length, _withdrawAmount, _withdrawDuration);
         reward.updated = now;
 
         rewards.push(reward);
@@ -109,7 +105,11 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _withdrawAmount New size for the reward.
      * @param _withdrawDuration New duration of the reward
      */
-    function updateReward(uint256 _id, uint256 _withdrawAmount, uint256 _withdrawDuration) public onlyMember {
+    function updateReward(
+        uint256 _id,
+        uint256 _withdrawAmount,
+        uint256 _withdrawDuration
+    ) public onlyMember {
         require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
         require(_withdrawAmount != rewards[_id].withdrawAmount, 'IS_EQUAL');
 
@@ -139,11 +139,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary) public {
         require(isMember(_beneficiary), 'IS_NOT_MEMBER');
-        WithdrawPoll withdraw = _createWithdrawPoll(
-            _amount,
-            proposeWithdrawPollDuration,
-            _beneficiary
-        );
+        WithdrawPoll withdraw = _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
         withdraws.push(withdraw);
     }
 
@@ -153,15 +149,12 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _duration The duration the withdraw poll
      * @param _beneficiary Beneficiary of the reward
      */
-    function _createWithdrawPoll(uint256 _amount, uint256 _duration, address _beneficiary) internal returns (WithdrawPoll) {
-        WithdrawPoll poll = new WithdrawPoll(
-            _beneficiary,
-            _amount,
-            _duration,
-            address(this),
-            owner(),
-            address(token)
-        );
+    function _createWithdrawPoll(
+        uint256 _amount,
+        uint256 _duration,
+        address _beneficiary
+    ) internal returns (WithdrawPoll) {
+        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, _duration, address(this), owner(), address(token));
 
         emit WithdrawPollCreated(_beneficiary, address(poll));
 
@@ -174,8 +167,19 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _withdrawAmount Size of the reward
      * @param _withdrawDuration Duration of the reward poll
      */
-    function _createRewardPoll(uint256 _id, uint256 _withdrawAmount, uint256 _withdrawDuration) internal returns (RewardPoll) {
-        RewardPoll poll = new RewardPoll(_id, _withdrawAmount, _withdrawDuration, rewardPollDuration, address(this), owner());
+    function _createRewardPoll(
+        uint256 _id,
+        uint256 _withdrawAmount,
+        uint256 _withdrawDuration
+    ) internal returns (RewardPoll) {
+        RewardPoll poll = new RewardPoll(
+            _id,
+            _withdrawAmount,
+            _withdrawDuration,
+            rewardPollDuration,
+            address(this),
+            owner()
+        );
         return poll;
     }
 
