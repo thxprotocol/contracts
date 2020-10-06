@@ -52,11 +52,11 @@ contract WithdrawPoll is BasePoll, Roles {
      * @param _sig The signed parameters
      */
     function withdraw(
-        address _member,
         uint256 _nonce,
+        address _member,
         bytes calldata _sig
     ) public onlyVoteAdmin useNonce(_member, _nonce) {
-        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _nonce, this)));
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(_nonce, voteAdmin, this)));
         require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
 
         require(state == WithdrawState.Approved, 'IS_NOT_APPROVED');

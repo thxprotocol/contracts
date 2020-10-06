@@ -161,9 +161,9 @@ describe('Reward with voting', function() {
 
         nonce = await pool.getLatestNonce(VOTER);
         nonce = parseInt(nonce) + 1;
-        hash = web3.utils.soliditySha3(from, nonce, reward.address);
+        hash = web3.utils.soliditySha3(nonce, from, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await reward.withdraw(VOTER, nonce, sig['signature'], { from });
+        await reward.withdraw(nonce, VOTER, sig['signature'], { from });
 
         const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
@@ -278,9 +278,9 @@ describe('Reward without voting', function() {
 
         nonce = await pool.getLatestNonce(VOTER);
         nonce = parseInt(nonce) + 1;
-        hash = web3.utils.soliditySha3(from, nonce, reward.address);
+        hash = web3.utils.soliditySha3(nonce, from, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await reward.withdraw(VOTER, nonce, sig['signature'], { from });
+        await reward.withdraw(nonce, VOTER, sig['signature'], { from });
 
         const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
