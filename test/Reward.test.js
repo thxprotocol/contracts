@@ -129,8 +129,12 @@ describe('Reward with voting', function() {
 
     it('can claim a withdraw for reward 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
 
-        await pool.claimWithdraw(0, { from });
+        hash = web3.utils.soliditySha3(from, 0, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.claimWithdraw(0, VOTER, nonce, sig['signature'], { from });
 
         const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
 
@@ -143,9 +147,11 @@ describe('Reward with voting', function() {
         expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
     it('can vote for a withdraw claim', async function() {
-        hash = web3.utils.soliditySha3(from, true, 2, reward.address);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, true, nonce, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(reward, VOTER, true, 2, sig['signature']);
+        await vote(reward, VOTER, true, nonce, sig['signature']);
     });
     it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
         timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),
@@ -174,9 +180,9 @@ describe('Reward without voting', function() {
 
         token = await THXToken.new({ from });
         pool = await AssetPool.new({ from });
-
         await pool.initialize(from, token.address, { from });
         await token.mint(from, amount, { from });
+        await pool.addMember(VOTER, { from });
     });
 
     it('can set the owner to ' + from, async function() {
@@ -245,8 +251,12 @@ describe('Reward without voting', function() {
 
     it('can claim a withdraw for reward 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
 
-        await pool.claimWithdraw(0, { from });
+        hash = web3.utils.soliditySha3(from, 0, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.claimWithdraw(0, VOTER, nonce, sig['signature'], { from });
 
         const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
 

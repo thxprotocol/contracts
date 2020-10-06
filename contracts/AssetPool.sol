@@ -79,7 +79,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _nonce Nonce of the voter
      */
     function validateNonce(address _member, uint256 _nonce) public {
-        require(polls[msg.sender], 'UNEXPECTED_SENDER');
+        require(polls[msg.sender] || msg.sender == owner(), 'UNEXPECTED_SENDER');
         uint256 lastNonce = memberNonces[_member];
         require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
         memberNonces[_member] = _nonce;
@@ -137,8 +137,24 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
     /**
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
-    function claimWithdraw(uint256 _id) public onlyMember {
+    function claimWithdraw(
+        uint256 _id,
+        address _member,
+        uint256 _nonce,
+        bytes calldata _sig
+    )
+        public
+        // _member could be deleted from arguments, as it recoverd
+        onlyOwner
+        onlyIfMember(_member)
+        useNonce(_member, _nonce)
+    {
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(owner(), _id, _nonce, this)));
+        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
         require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
 
         WithdrawPoll withdraw = _createWithdrawPoll(
