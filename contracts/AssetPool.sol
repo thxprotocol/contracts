@@ -160,7 +160,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         WithdrawPoll withdraw = _createWithdrawPoll(
             rewards[_id].withdrawAmount,
             rewards[_id].withdrawDuration,
-            msg.sender
+            _member
         );
 
         withdraws.push(withdraw);
