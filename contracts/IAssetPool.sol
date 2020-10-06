@@ -41,14 +41,14 @@ interface IAssetPool {
 
     /**
      * @dev Validate a given nonce, reverts if nonce is not right
-     * @param _voter Address of the voter
+     * @param _member Address of the voter
      * @param _nonce Nonce of the voter
      */
-    function validateNonce(address _voter, uint256 _nonce) external;
+    function validateNonce(address _member, uint256 _nonce) external;
 
     /**
      * @dev Get the latest nonce of a given voter
-     * @param _voter Address of the voter
+     * @param _member Address of the voter
      */
-    function getLatestNonce(address _voter) external view returns (uint256);
+    function getLatestNonce(address _member) external view returns (uint256);
 }
