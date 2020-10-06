@@ -159,7 +159,11 @@ describe('Reward with voting', function() {
         const oldBeneficiaryBalance = await token.balanceOf(VOTER);
         const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
-        await reward.withdraw({ from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, nonce, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await reward.withdraw(VOTER, nonce, sig['signature'], { from });
 
         const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
@@ -269,12 +273,16 @@ describe('Reward without voting', function() {
 
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
-        const oldBeneficiaryBalance = await token.balanceOf(from);
+        const oldBeneficiaryBalance = await token.balanceOf(VOTER);
         const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
-        await reward.withdraw({ from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, nonce, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await reward.withdraw(VOTER, nonce, sig['signature'], { from });
 
-        const newBeneficiaryBalance = await token.balanceOf(from);
+        const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
 
         expect(parseInt(newAssetPoolBalance, 10)).to.lessThan(parseInt(oldAssetPoolBalance, 10));

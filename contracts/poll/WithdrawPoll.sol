@@ -35,9 +35,7 @@ contract WithdrawPoll is BasePoll, Roles {
         address _poolAddress,
         address _voteAdmin,
         address _tokenAddress
-    )
-        public BasePoll(_poolAddress, _voteAdmin, now, _endtime)
-    {
+    ) public BasePoll(_poolAddress, _voteAdmin, now, _endtime) {
         // TODO, to discuss, Could be a valid address if pools decide to burn tokens?
         require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
@@ -49,10 +47,20 @@ contract WithdrawPoll is BasePoll, Roles {
 
     /**
      * @dev Withdraw accumulated balance for a beneficiary.
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
-    function withdraw() public {
+    function withdraw(
+        address _member,
+        uint256 _nonce,
+        bytes calldata _sig
+    ) public onlyVoteAdmin useNonce(_member, _nonce) {
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(voteAdmin, _nonce, this)));
+        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
+
         require(state == WithdrawState.Approved, 'IS_NOT_APPROVED');
-        require(msg.sender == beneficiary, 'IS_NOT_BENEFICIARY');
+        require(_member == beneficiary, 'IS_NOT_BENEFICIARY');
         // check below could be deleted to save gast costs, as onWithdrawal will fail
         // if the balance is insufficient.
         require(token.balanceOf(address(pool)) >= amount, 'INSUFFICIENT_BALANCE');

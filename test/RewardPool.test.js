@@ -108,10 +108,15 @@ describe('Asset Pool', function() {
     );
     it('can finalize the reward poll', async () => finalize(withdrawal));
     it('can withdraw the reward', async function() {
+        // Currently failing because private key from accounts[1] can not be retrieved.
         const oldBeneficiaryBalance = await token.balanceOf(accounts[1]);
         const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
-        await withdrawal.withdraw({ from: accounts[1] });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, nonce, withdrawal.address);
+        sig = await web3.eth.accounts.sign(hash /**, ACCOUNT1 PK */);
+        await withdrawal.withdraw(VOTER, nonce, sig['signature'], { from: accounts[1] });
 
         const newBeneficiaryBalance = await token.balanceOf(accounts[1]);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
