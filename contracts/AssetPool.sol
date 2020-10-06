@@ -24,6 +24,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 updated;
     }
 
+    mapping(address => bool) public polls;
     Reward[] public rewards;
     WithdrawPoll[] public withdraws;
 
@@ -53,6 +54,28 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         transferOwnership(_owner);
 
         token = IERC20(_tokenAddress);
+    }
+
+    mapping(address => uint256) public memberNonces;
+
+    /**
+     * @dev Get the latest nonce of a given voter
+     * @param _voter Address of the voter
+     */
+    function getLatestNonce(address _voter) public view returns (uint256) {
+        return memberNonces[_voter];
+    }
+
+    /**
+     * @dev Validate a given nonce, reverts if nonce is not right
+     * @param _voter Address of the voter
+     * @param _nonce Nonce of the voter
+     */
+    function validateNonce(address _voter, uint256 _nonce) public {
+        require(polls[msg.sender], 'UNEXPECTED_SENDER');
+        uint256 lastNonce = memberNonces[_voter];
+        require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
+        memberNonces[_voter] = _nonce;
     }
 
     /**
@@ -164,7 +187,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         );
 
         emit WithdrawPollCreated(_beneficiary, address(poll));
-
+        polls[address(poll)] = true;
         return poll;
     }
 
@@ -187,6 +210,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
             address(this),
             owner()
         );
+        polls[address(poll)] = true;
         return poll;
     }
 

@@ -143,9 +143,9 @@ describe('Reward with voting', function() {
         expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
     it('can vote for a withdraw claim', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, reward.address);
+        hash = web3.utils.soliditySha3(from, true, 2, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(reward, VOTER, true, 1, sig['signature']);
+        await vote(reward, VOTER, true, 2, sig['signature']);
     });
     it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
         timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),

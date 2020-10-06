@@ -83,12 +83,12 @@ describe('Rewards', function() {
         expect(await pool.isMember(VOTER)).to.equal(true);
     });
     it('can vote for a reward proposal', async function() {
-        nonce = await poll.getLatestNonce(VOTER);
+        nonce = await pool.getLatestNonce(VOTER);
         expect(nonce.eq(0));
 
         await vote(poll, VOTER, true, 1, sig['signature']);
 
-        nonce = await poll.getLatestNonce(VOTER);
+        nonce = await pool.getLatestNonce(VOTER);
         expect(nonce.eq(1));
     });
 
@@ -117,9 +117,9 @@ describe('Rewards', function() {
     });
 
     it('can vote for a proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        hash = web3.utils.soliditySha3(from, true, 2, poll.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(poll, VOTER, true, 1, sig['signature']);
+        await vote(poll, VOTER, true, 2, sig['signature']);
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
@@ -147,9 +147,9 @@ describe('Rewards', function() {
     });
 
     it('can vote for a proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, poll.address);
+        hash = web3.utils.soliditySha3(from, true, 3, poll.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(poll, VOTER, true, 1, sig['signature']);
+        await vote(poll, VOTER, true, 3, sig['signature']);
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
