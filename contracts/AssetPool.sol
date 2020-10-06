@@ -54,6 +54,8 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         transferOwnership(_owner);
 
         token = IERC20(_tokenAddress);
+        // TODO check balance of token (should be prefilled)
+        // should be refilled by erc20 transfer function with _tokenAddress
     }
 
     mapping(address => uint256) public memberNonces;
@@ -76,18 +78,6 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         uint256 lastNonce = memberNonces[_member];
         require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
         memberNonces[_member] = _nonce;
-    }
-
-    /**
-     * @dev Store a deposit in the contract. The tx should be approved prior to calling this method.
-     * @param _amount Size of the deposit
-     */
-    function deposit(uint256 _amount) public onlyMember {
-        require(token.balanceOf(msg.sender) >= _amount, 'INSUFFICIENT_BALANCE');
-
-        token.transferFrom(msg.sender, address(this), _amount);
-
-        emit Deposited(msg.sender, _amount);
     }
 
     /**
