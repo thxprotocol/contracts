@@ -58,6 +58,11 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
         // should be refilled by erc20 transfer function with _tokenAddress
     }
 
+    modifier useNonce(address _member, uint256 _nonce) {
+        validateNonce(_member, _nonce);
+        _;
+    }
+
     mapping(address => uint256) public memberNonces;
 
     /**
@@ -150,8 +155,7 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
      */
-    function proposeWithdraw(uint256 _amount, address _beneficiary) public {
-        require(isMember(_beneficiary), 'IS_NOT_MEMBER');
+    function proposeWithdraw(uint256 _amount, address _beneficiary) public onlyIfMember(_beneficiary) {
         WithdrawPoll withdraw = _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
         withdraws.push(withdraw);
     }

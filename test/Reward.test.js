@@ -49,7 +49,7 @@ describe('Reward with voting', function() {
         await token.mint(from, mintAmount, { from });
 
         await token.approve(pool.address, depositAmount, { from });
-        await pool.deposit(depositAmount, { from });
+        await token.transfer(pool.address, depositAmount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 
@@ -192,7 +192,7 @@ describe('Reward without voting', function() {
         await token.mint(from, mintAmount, { from });
 
         await token.approve(pool.address, depositAmount, { from });
-        await pool.deposit(depositAmount, { from });
+        await token.transfer(pool.address, depositAmount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 

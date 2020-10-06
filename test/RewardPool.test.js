@@ -42,7 +42,7 @@ describe('Asset Pool', function() {
 
         await token.mint(from, amount, { from });
         await token.approve(pool.address, amount, { from });
-        await pool.deposit(amount, { from });
+        await token.transfer(pool.address, amount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 
@@ -101,7 +101,6 @@ describe('Asset Pool', function() {
         expect(await pool.isMember(VOTER)).to.equal(true);
     });
     it('can vote for a withdraw claim', async function() {
-        nonce = await pool.getLatestNonce(VOTER);
         await vote(withdrawal, VOTER, true, 1, sig['signature']);
     });
     it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>

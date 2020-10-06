@@ -116,10 +116,12 @@ describe('Rewards', function() {
         poll = contract.fromArtifact('RewardPoll', reward.poll);
     });
 
-    it('can vote for a proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 2, poll.address);
+    it('can vote for a proposal 1', async function() {
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, true, nonce, poll.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(poll, VOTER, true, 2, sig['signature']);
+        await vote(poll, VOTER, true, nonce, sig['signature']);
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));
@@ -146,10 +148,12 @@ describe('Rewards', function() {
         poll = contract.fromArtifact('RewardPoll', reward.poll);
     });
 
-    it('can vote for a proposal', async function() {
-        hash = web3.utils.soliditySha3(from, true, 3, poll.address);
+    it('can vote for a proposal 2', async function() {
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, true, nonce, poll.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(poll, VOTER, true, 3, sig['signature']);
+        await vote(poll, VOTER, true, nonce, sig['signature']);
     });
 
     it('can travel ' + REWARD_POLL_DURATION + 's in time', async () => timeTravel(REWARD_POLL_DURATION / 60));

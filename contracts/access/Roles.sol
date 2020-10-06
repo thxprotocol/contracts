@@ -26,6 +26,11 @@ contract Roles is AccessControlUpgradeSafe {
         _;
     }
 
+    modifier onlyIfMember(address _member) {
+        require(isMember(_member), 'NO_MEMBER');
+        _;
+    }
+
     modifier onlyManager() {
         require(
             hasRole(MANAGER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
