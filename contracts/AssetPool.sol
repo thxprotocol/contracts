@@ -122,12 +122,29 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
      * @param _id References reward
      * @param _withdrawAmount New size for the reward.
      * @param _withdrawDuration New duration of the reward
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
     function updateReward(
         uint256 _id,
         uint256 _withdrawAmount,
-        uint256 _withdrawDuration
-    ) public onlyMember {
+        uint256 _withdrawDuration,
+        address _member,
+        uint256 _nonce,
+        bytes calldata _sig
+    )
+        public
+        // _member could be deleted from arguments, as it recoverd
+        onlyOwner
+        onlyIfMember(_member)
+        useNonce(_member, _nonce)
+    {
+        bytes32 message = Signature.prefixed(
+            keccak256(abi.encodePacked(owner(), _id, _withdrawAmount, _withdrawDuration, _nonce, this))
+        );
+        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
+
         require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
         require(_withdrawAmount != rewards[_id].withdrawAmount, 'IS_EQUAL');
 

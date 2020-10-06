@@ -106,8 +106,11 @@ describe('Rewards', function() {
 
     it('can update the reward for a reward size of 100', async function() {
         let reward = await pool.rewards(0);
-
-        await pool.updateReward(0, 100, 300, { from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, 0, 100, 300, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.updateReward(0, 100, 300, VOTER, nonce, sig['signature'], { from });
 
         reward = await pool.rewards(0);
 
@@ -138,8 +141,11 @@ describe('Rewards', function() {
 
     it('can disable a reward', async function() {
         let reward = await pool.rewards(0);
-
-        await pool.updateReward(0, 0, 180, { from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, 0, 0, 180, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.updateReward(0, 0, 180, VOTER, nonce, sig['signature'], { from });
 
         reward = await pool.rewards(0);
 
