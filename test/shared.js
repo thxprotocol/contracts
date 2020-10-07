@@ -11,6 +11,8 @@ module.exports = {
     MINT_AMOUNT: '5000',
     VOTER: '0xaf9d56684466fcFcEA0a2B7fC137AB864d642946',
     VOTER_PK: '0x97093724e1748ebfa6aa2d2ec4ec68df8678423ab9a12eb2d27ddc74e35e5db9',
+    NON_MEMBER: '0x404a5FedAe74a9D68b3638d27BEcbD3CB11888eC',
+    NON_MEMBER_PK: '0x0070a5730f881d58d5afdc3fc1ecace29d95d4600e46e8915b728bf903dc156b',
     withdrawPollCreatedEvent: async (pool, member) => {
         return (
             await pool.getPastEvents('WithdrawPollCreated', {

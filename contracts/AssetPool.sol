@@ -30,8 +30,6 @@ contract AssetPool is Roles {
 
     IERC20 public token;
 
-    /*==== IMPORTANT: Do not alter (only extend) the storage layout above this line! ====*/
-
     enum RewardState { Disabled, Enabled }
 
     event Withdrawn(address indexed member, uint256 reward);
@@ -182,8 +180,27 @@ contract AssetPool is Roles {
      * @dev Creates a custom withdraw proposal.
      * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
-    function proposeWithdraw(uint256 _amount, address _beneficiary) public onlyIfMember(_beneficiary) {
+    function proposeWithdraw(
+        uint256 _amount,
+        address _beneficiary,
+        address _member,
+        uint256 _nonce,
+        bytes calldata _sig
+    )
+        public
+        // _beneficiary could be deleted from arguments, as it recoverd
+        onlyOwner
+        onlyIfMember(_beneficiary)
+        onlyIfMember(_member)
+        useNonce(_member, _nonce)
+    {
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(owner(), _amount, _beneficiary, _nonce, this)));
+        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
+
         WithdrawPoll withdraw = _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
         withdraws.push(withdraw);
     }

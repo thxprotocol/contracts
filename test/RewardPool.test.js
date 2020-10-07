@@ -10,6 +10,8 @@ const {
     PROPOSE_WITHDRAW_POLL_DURATION,
     VOTER,
     VOTER_PK,
+    NON_MEMBER,
+    NON_MEMBER_PK,
 } = require('./shared');
 const THXToken = contract.fromArtifact('THXToken');
 const AssetPool = contract.fromArtifact('AssetPool');
@@ -62,7 +64,11 @@ describe('Asset Pool', function() {
 
         expect(duration.toNumber()).to.equal(PROPOSE_WITHDRAW_POLL_DURATION);
     });
-
+    it('can make ' + VOTER + 'a member', async function() {
+        expect(await pool.isMember(VOTER)).to.equal(false);
+        await pool.addMember(VOTER, { from });
+        expect(await pool.isMember(VOTER)).to.equal(true);
+    });
     it('can make ' + accounts[1] + 'a member', async function() {
         const amount = web3.utils.toWei('100');
 
@@ -71,7 +77,12 @@ describe('Asset Pool', function() {
         expect(await pool.isManager(from)).to.equal(true);
         expect(await pool.isMember(accounts[1])).to.equal(true);
 
-        await pool.proposeWithdraw(amount, accounts[1], { from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, amount, accounts[1], nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+
+        await pool.proposeWithdraw(amount, accounts[1], VOTER, nonce, sig['signature'], { from });
     });
 
     it('can propose a 100 THX reward for ' + accounts[1], async function() {
@@ -80,7 +91,11 @@ describe('Asset Pool', function() {
         expect(await pool.isMember(from)).to.equal(true);
         expect(await pool.isMember(accounts[1])).to.equal(true);
 
-        await pool.proposeWithdraw(amount, accounts[1], { from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, amount, accounts[1], nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.proposeWithdraw(amount, accounts[1], VOTER, nonce, sig['signature'], { from });
     });
 
     it('beneficiary can see its rewards address in the reward', async function() {
@@ -91,17 +106,20 @@ describe('Asset Pool', function() {
         expect(withdrawal.address).to.equal(withdrawPollAddress);
     });
     it('non member cant vote for a withdraw proposal', async function() {
-        const hash = web3.utils.soliditySha3(from, true, 1, withdrawal.address);
-        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await expect(vote(withdrawal, VOTER, true, 1, sig['signature'])).to.be.revertedWith('NO_MEMBER');
-    });
-    it('can make ' + VOTER + 'a member', async function() {
-        expect(await pool.isMember(VOTER)).to.equal(false);
-        await pool.addMember(VOTER, { from });
-        expect(await pool.isMember(VOTER)).to.equal(true);
+        nonce = await pool.getLatestNonce(NON_MEMBER);
+        nonce = parseInt(nonce) + 1;
+        const hash = web3.utils.soliditySha3(from, true, nonce, withdrawal.address);
+        sig = await web3.eth.accounts.sign(hash, NON_MEMBER_PK);
+
+        await expect(vote(withdrawal, NON_MEMBER, true, nonce, sig['signature'])).to.be.revertedWith('NO_MEMBER');
     });
     it('can vote for a withdraw claim', async function() {
-        await vote(withdrawal, VOTER, true, 1, sig['signature']);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        const hash = web3.utils.soliditySha3(from, true, nonce, withdrawal.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+
+        await vote(withdrawal, VOTER, true, nonce, sig['signature']);
     });
     it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
         timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),
