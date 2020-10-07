@@ -5,14 +5,13 @@ pragma solidity ^0.6.4;
 
 import '@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
 
 import './access/Roles.sol';
 import './poll/WithdrawPoll.sol';
 import './poll/RewardPoll.sol';
 
-contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
+contract AssetPool is OwnableUpgradeSafe, Roles {
     using SafeMath for uint256;
 
     struct Reward {
