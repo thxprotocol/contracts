@@ -3,7 +3,6 @@
 
 pragma solidity ^0.6.4;
 
-import '@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
 
@@ -11,7 +10,7 @@ import './access/Roles.sol';
 import './poll/WithdrawPoll.sol';
 import './poll/RewardPoll.sol';
 
-contract AssetPool is OwnableUpgradeSafe, Roles {
+contract AssetPool is Roles {
     using SafeMath for uint256;
 
     struct Reward {
@@ -22,7 +21,6 @@ contract AssetPool is OwnableUpgradeSafe, Roles {
         RewardPoll poll;
         uint256 updated;
     }
-
     mapping(address => bool) public polls;
     Reward[] public rewards;
     WithdrawPoll[] public withdraws;
@@ -47,10 +45,8 @@ contract AssetPool is OwnableUpgradeSafe, Roles {
      * @param _tokenAddress Address of the ERC20 token used for this pool
      */
     function initialize(address _owner, address _tokenAddress) public initializer {
-        __Ownable_init();
         __Roles_init(_owner);
-
-        transferOwnership(_owner);
+        __owner = _owner;
 
         token = IERC20(_tokenAddress);
         // TODO check balance of token (should be prefilled)

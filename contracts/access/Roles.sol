@@ -105,4 +105,21 @@ contract Roles is AccessControlUpgradeSafe {
         _managers.remove(_account);
         emit ManagerRemoved(_account);
     }
+
+    address internal __owner;
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        return __owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(__owner == msg.sender, 'Ownable: caller is not the owner');
+        _;
+    }
 }
