@@ -31,7 +31,6 @@ contract BasePoll {
     bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
-    mapping(address => uint256) public memberNonces;
 
     modifier checkTime() {
         require(now >= startTime && now <= endTime, 'IS_NO_VALID_TIME');
@@ -49,18 +48,8 @@ contract BasePoll {
     }
 
     modifier useNonce(address _voter, uint256 _nonce) {
-        uint256 lastNonce = memberNonces[_voter];
-        require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
-        memberNonces[_voter] = _nonce;
+        pool.validateNonce(_voter, _nonce);
         _;
-    }
-
-    /**
-     * @dev Get the latest nonce of a given voter
-     * @param _voter Address of the voter
-     */
-    function getLatestNonce(address _voter) public view returns (uint256) {
-        return memberNonces[_voter];
     }
 
     /**

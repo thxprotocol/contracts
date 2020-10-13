@@ -49,7 +49,7 @@ describe('Reward with voting', function() {
         await token.mint(from, mintAmount, { from });
 
         await token.approve(pool.address, depositAmount, { from });
-        await pool.deposit(depositAmount, { from });
+        await token.transfer(pool.address, depositAmount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 
@@ -129,35 +129,43 @@ describe('Reward with voting', function() {
 
     it('can claim a withdraw for reward 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
 
-        await pool.claimWithdraw(0, { from });
-
-        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
-
+        hash = web3.utils.soliditySha3(from, 0, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.claimWithdraw(0, VOTER, nonce, sig['signature'], { from });
+        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, VOTER);
         reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
         const beneficiary = await reward.beneficiary();
         const amount = await reward.amount();
 
-        expect(beneficiary).to.equal(from);
+        expect(beneficiary).to.equal(VOTER);
         expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
     it('can vote for a withdraw claim', async function() {
-        hash = web3.utils.soliditySha3(from, true, 1, reward.address);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(from, true, nonce, reward.address);
         sig = await web3.eth.accounts.sign(hash, VOTER_PK);
-        await vote(reward, VOTER, true, 1, sig['signature']);
+        await vote(reward, VOTER, true, nonce, sig['signature']);
     });
     it('can travel ' + PROPOSE_WITHDRAW_POLL_DURATION + 's in time', async () =>
         timeTravel(PROPOSE_WITHDRAW_POLL_DURATION / 60),
     );
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
-        const oldBeneficiaryBalance = await token.balanceOf(from);
+        const oldBeneficiaryBalance = await token.balanceOf(VOTER);
         const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
-        await reward.withdraw({ from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(nonce, from, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await reward.withdraw(nonce, VOTER, sig['signature'], { from });
 
-        const newBeneficiaryBalance = await token.balanceOf(from);
+        const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
 
         expect(parseInt(newAssetPoolBalance, 10)).to.lessThan(parseInt(oldAssetPoolBalance, 10));
@@ -174,9 +182,9 @@ describe('Reward without voting', function() {
 
         token = await THXToken.new({ from });
         pool = await AssetPool.new({ from });
-
         await pool.initialize(from, token.address, { from });
         await token.mint(from, amount, { from });
+        await pool.addMember(VOTER, { from });
     });
 
     it('can set the owner to ' + from, async function() {
@@ -192,7 +200,7 @@ describe('Reward without voting', function() {
         await token.mint(from, mintAmount, { from });
 
         await token.approve(pool.address, depositAmount, { from });
-        await pool.deposit(depositAmount, { from });
+        await token.transfer(pool.address, depositAmount, { from });
 
         const newBalance = web3.utils.fromWei(await token.balanceOf(pool.address));
 
@@ -245,28 +253,36 @@ describe('Reward without voting', function() {
 
     it('can claim a withdraw for reward 0', async function() {
         expect(await pool.isMember(from)).to.equal(true);
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
 
-        await pool.claimWithdraw(0, { from });
+        hash = web3.utils.soliditySha3(from, 0, nonce, pool.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await pool.claimWithdraw(0, VOTER, nonce, sig['signature'], { from });
 
-        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, from);
+        const [withdrawPollAddress] = await withdrawPollCreatedEvent(pool, VOTER);
 
         reward = contract.fromArtifact('WithdrawPoll', withdrawPollAddress);
 
         const beneficiary = await reward.beneficiary();
         const amount = await reward.amount();
 
-        expect(beneficiary).to.equal(from);
+        expect(beneficiary).to.equal(VOTER);
         expect(web3.utils.fromWei(amount)).to.equal(WITHDRAW_AMOUNT);
     });
 
     it('can finalize the reward poll', async () => finalize(reward));
     it('can withdraw the reward', async function() {
-        const oldBeneficiaryBalance = await token.balanceOf(from);
+        const oldBeneficiaryBalance = await token.balanceOf(VOTER);
         const oldAssetPoolBalance = await token.balanceOf(pool.address);
 
-        await reward.withdraw({ from });
+        nonce = await pool.getLatestNonce(VOTER);
+        nonce = parseInt(nonce) + 1;
+        hash = web3.utils.soliditySha3(nonce, from, reward.address);
+        sig = await web3.eth.accounts.sign(hash, VOTER_PK);
+        await reward.withdraw(nonce, VOTER, sig['signature'], { from });
 
-        const newBeneficiaryBalance = await token.balanceOf(from);
+        const newBeneficiaryBalance = await token.balanceOf(VOTER);
         const newAssetPoolBalance = await token.balanceOf(pool.address);
 
         expect(parseInt(newAssetPoolBalance, 10)).to.lessThan(parseInt(oldAssetPoolBalance, 10));
