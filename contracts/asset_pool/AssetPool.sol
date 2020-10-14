@@ -111,6 +111,9 @@ contract AssetPool is Roles, RelayReceiver {
      * @param _id References reward
      * @param _withdrawAmount New size for the reward.
      * @param _withdrawDuration New duration of the reward
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
     function updateReward(
         uint256 _id,
@@ -132,6 +135,9 @@ contract AssetPool is Roles, RelayReceiver {
     /**
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
     function claimWithdraw(uint256 _id) public onlyGasStation {
         require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
@@ -150,6 +156,9 @@ contract AssetPool is Roles, RelayReceiver {
      * @dev Creates a custom withdraw proposal.
      * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
     function proposeWithdraw(uint256 _amount, address _beneficiary)
         public

@@ -45,6 +45,9 @@ contract WithdrawPoll is BasePoll {
 
     /**
      * @dev Withdraw accumulated balance for a beneficiary.
+     * @param _member The address of the member
+     * @param _nonce Number only used once
+     * @param _sig The signed parameters
      */
     function withdraw() public onlyGasStation {
         require(state == WithdrawState.Approved, "IS_NOT_APPROVED");
