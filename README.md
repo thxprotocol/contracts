@@ -1,6 +1,6 @@
 # Commands
 
-`npm i`: install
+`yarn`: install
 
 `npx buidler`: show comamnds
 
