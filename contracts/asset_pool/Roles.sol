@@ -30,11 +30,6 @@ contract Roles is AccessControl {
         _;
     }
 
-    modifier onlyIfMember(address _member) {
-        require(isMember(_member), 'NO_MEMBER');
-        _;
-    }
-
     modifier onlyManager() {
         require(
             hasRole(MANAGER_ROLE, msg.sender) ||
@@ -122,23 +117,6 @@ contract Roles is AccessControl {
             __gasStation == msg.sender,
             "Ownable: caller is not the gasStation"
         );
-        _;
-    }
-
-    address internal __owner;
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        return __owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(__owner == msg.sender, 'Ownable: caller is not the owner');
         _;
     }
 }
