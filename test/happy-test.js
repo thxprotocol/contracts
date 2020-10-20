@@ -9,7 +9,8 @@ async function HelpSign(object, name, args, account) {
   const call = object.interface.encodeFunctionData(name, args);
   const hash = web3.utils.soliditySha3(call, object.address, gasStation.address, nonce)
   const sig = await account.signMessage(ethers.utils.arrayify(hash))
-  await gasStation.call(call, object.address, nonce, sig);
+  tx = await gasStation.call(call, object.address, nonce, sig);
+  return tx.wait()
 }
 
 describe("Greeter", function() {
@@ -17,6 +18,7 @@ describe("Greeter", function() {
   let token;
   let assetPool;
   let voter;
+  let withdrawPoll;
 
 
   before(async function () {
@@ -51,6 +53,7 @@ describe("Greeter", function() {
     // todo check storage
 
     await assetPool.addReward(parseEther("5"), 180);
+
   })
   it('Add member', async function() {
     expect(await assetPool.isMember(voter.getAddress())).to.equal(false);
@@ -75,8 +78,10 @@ describe("Greeter", function() {
     // todo check storage
   })
   it('Post withdraw claim for a reward', async function() {
-    await HelpSign(assetPool, "claimWithdraw", [0], voter)
-    const withdraw = await ethers.getContractAt("WithdrawPoll", await assetPool.withdraws(0));
+    const tx = await HelpSign(assetPool, "claimReward", [0], voter)
+    const event =  await assetPool.interface.parseLog(tx.logs[0])
+    withdrawPoll = await event.args.poll
+    const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
 
     const beneficiary = await withdraw.beneficiary();
     const amount = await withdraw.amount();
@@ -84,21 +89,21 @@ describe("Greeter", function() {
     expect(amount).to.equal(parseEther("5"));
   })
   it('Vote for withdraw claim', async function() {
-    withdraw = await ethers.getContractAt("WithdrawPoll", await assetPool.withdraws(0));
+    withdraw = await ethers.getContractAt("WithdrawPoll", await withdrawPoll);
     await HelpSign(withdraw, "vote", [true], voter)
   })
   it('Finalize withdraw claim', async function() {
     await ethers.provider.send("evm_increaseTime", [180])
     await ethers.provider.send("evm_mine")
 
-    const withdraw = await ethers.getContractAt("WithdrawPoll", await assetPool.withdraws(0));
+    const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
     await withdraw.tryToFinalize();
   })
   it('Execute withdraw claim', async function() {
     expect(await token.balanceOf(voter.getAddress())).to.be.eq(0);
     expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("1000"));
 
-    const withdraw = await ethers.getContractAt("WithdrawPoll", await assetPool.withdraws(0));
+    const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
     await HelpSign(withdraw, "withdraw", [], voter)
 
     expect(await token.balanceOf(voter.getAddress())).to.be.eq(parseEther("5"));

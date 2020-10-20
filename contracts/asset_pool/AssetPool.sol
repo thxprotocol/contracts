@@ -3,8 +3,6 @@
 
 pragma solidity ^0.6.4;
 
-import "@nomiclabs/buidler/console.sol";
-
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -24,9 +22,7 @@ contract AssetPool is Roles, RelayReceiver {
         RewardPoll poll;
         uint256 updated;
     }
-    mapping(address => bool) public polls;
     Reward[] public rewards;
-    WithdrawPoll[] public withdraws;
 
     uint256 public proposeWithdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
@@ -132,18 +128,28 @@ contract AssetPool is Roles, RelayReceiver {
     /**
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
+     * @param _beneficiary Address of the beneficiary
      */
-    function claimWithdraw(uint256 _id) public onlyGasStation {
+    function claimRewardFor(uint256 _id, address _beneficiary)
+        public
+        onlyGasStation
+    {
         require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
-        require(isMember(_msgSigner()), "NOT_MEMBER");
+        require(isMember(_beneficiary), "NOT_MEMBER");
 
-        WithdrawPoll withdraw = _createWithdrawPoll(
+        _createWithdrawPoll(
             rewards[_id].withdrawAmount,
             rewards[_id].withdrawDuration,
-            _msgSigner()
+            _beneficiary
         );
+    }
 
-        withdraws.push(withdraw);
+    /**
+     * @dev Creates a withdraw poll for a reward.
+     * @param _id Reference id of the reward
+     */
+    function claimReward(uint256 _id) public onlyGasStation {
+        claimRewardFor(_id, _msgSigner());
     }
 
     /**
@@ -158,12 +164,7 @@ contract AssetPool is Roles, RelayReceiver {
         require(isMember(_msgSigner()), "NOT_MEMBER");
         require(isMember(_beneficiary), "NOT_MEMBER");
 
-        WithdrawPoll withdraw = _createWithdrawPoll(
-            _amount,
-            proposeWithdrawPollDuration,
-            _beneficiary
-        );
-        withdraws.push(withdraw);
+        _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
     }
 
     /**
@@ -176,7 +177,7 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _amount,
         uint256 _duration,
         address _beneficiary
-    ) internal returns (WithdrawPoll) {
+    ) internal {
         WithdrawPoll poll = new WithdrawPoll(
             _beneficiary,
             _amount,
@@ -187,8 +188,6 @@ contract AssetPool is Roles, RelayReceiver {
         );
 
         emit WithdrawPollCreated(_beneficiary, address(poll));
-        polls[address(poll)] = true;
-        return poll;
     }
 
     /**
@@ -210,7 +209,6 @@ contract AssetPool is Roles, RelayReceiver {
             address(this),
             __gasStation
         );
-        polls[address(poll)] = true;
         return poll;
     }
 
