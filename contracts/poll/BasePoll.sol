@@ -126,7 +126,7 @@ contract BasePoll is RelayReceiver {
     /**
      * Finalize poll and call onPollFinish callback with result
      */
-    function tryToFinalize() external notFinalized returns (bool) {
+    function tryToFinalize() public notFinalized returns (bool) {
         if (now < endTime && bypassVotes == false) {
             return false;
         }

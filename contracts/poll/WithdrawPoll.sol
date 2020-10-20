@@ -47,6 +47,9 @@ contract WithdrawPoll is BasePoll {
      * @dev Withdraw accumulated balance for a beneficiary.
      */
     function withdraw() public onlyGasStation {
+        if (state == WithdrawState.Pending) {
+            tryToFinalize();
+        }
         require(state == WithdrawState.Approved, "IS_NOT_APPROVED");
         require(_msgSigner() == beneficiary, "IS_NOT_BENEFICIARY");
         // check below could be deleted to save gast costs, as onWithdrawal will fail
