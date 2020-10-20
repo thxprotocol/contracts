@@ -250,6 +250,7 @@ contract AssetPool is Roles {
             owner()
         );
         polls[address(poll)] = true;
+        emit RewardPollCreated(msg.sender, address(poll), _id, _withdrawAmount);
         return poll;
     }
 
