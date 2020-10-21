@@ -131,16 +131,11 @@ contract BasePoll is RelayReceiver {
             return false;
         }
         finalized = true;
-        onPollFinish(isSubjectApproved());
+        onPollFinish(getCurrentApprovalState());
         return true;
     }
 
-    // why are there 2 view methods with the same return value?
-    function isNowApproved() public view returns (bool) {
-        return isSubjectApproved();
-    }
-
-    function isSubjectApproved() internal virtual view returns (bool) {
+    function getCurrentApprovalState() internal virtual view returns (bool) {
         return yesCounter > noCounter || bypassVotes == true;
     }
 
