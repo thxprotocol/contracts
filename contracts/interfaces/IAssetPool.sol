@@ -12,6 +12,8 @@ interface IAssetPool {
      */
     function isMember(address) external view returns (bool);
 
+    function isManager(address) external view returns (bool);
+
     /**
      * @dev RewardPoll callback
      * @param _id The referenced reward

@@ -55,10 +55,10 @@ describe("Greeter", function() {
     await assetPool.addReward(parseEther("5"), 180);
 
   })
-  it('Add member', async function() {
-    expect(await assetPool.isMember(voter.getAddress())).to.equal(false);
-    await assetPool.addMember(voter.getAddress());
-    expect(await assetPool.isMember(voter.getAddress())).to.equal(true);
+  it('Add manager', async function() {
+    expect(await assetPool.isManager(voter.getAddress())).to.equal(false);
+    await assetPool.addManager(voter.getAddress());
+    expect(await assetPool.isManager(voter.getAddress())).to.equal(true);
   })
   it('Vote reward', async function() {
     const reward = await assetPool.rewards(0);

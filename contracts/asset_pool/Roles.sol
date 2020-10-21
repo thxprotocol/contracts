@@ -52,7 +52,8 @@ contract Roles is AccessControl {
      * @param _account A member address
      */
     function isMember(address _account) public view returns (bool) {
-        return hasRole(MEMBER_ROLE, _account);
+        return
+            hasRole(MEMBER_ROLE, _account) || hasRole(MANAGER_ROLE, _account);
     }
 
     /**

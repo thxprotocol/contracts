@@ -77,14 +77,22 @@ contract BasePoll is RelayReceiver {
     }
 
     /**
-     * @dev Process user`s vote
+     * @dev callback called after poll finalization
      * @param _agree True if user endorses the proposal else False
      */
-    function vote(bool _agree) external checkTime onlyGasStation {
-        address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
-        require(votesByAddress[_voter].time == 0, "HAS_VOTED");
+    function vote(bool _agree) external virtual {}
 
+    /**
+     * @dev Process user`s vote
+     * @param _agree True if user endorses the proposal else False
+     * @param _voter The address of the voter
+     */
+    function _vote(bool _agree, address _voter)
+        internal
+        checkTime
+        onlyGasStation
+    {
+        require(votesByAddress[_voter].time == 0, "HAS_VOTED");
         uint256 voiceWeight = 1;
 
         if (_agree) {

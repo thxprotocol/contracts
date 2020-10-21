@@ -74,4 +74,14 @@ contract WithdrawPoll is BasePoll {
             state = WithdrawState.Rejected;
         }
     }
+
+    /**
+     * @dev callback called after poll finalization
+     * @param _agree True if user endorses the proposal else False
+     */
+    function vote(bool _agree) external override {
+        address _voter = _msgSigner();
+        require(pool.isManager(_voter), "NO_MANAGER");
+        _vote(_agree, _voter);
+    }
 }

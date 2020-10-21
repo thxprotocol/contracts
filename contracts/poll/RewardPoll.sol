@@ -41,4 +41,14 @@ contract RewardPoll is BasePoll {
     function onPollFinish(bool agree) internal override {
         pool.onRewardPollFinish(id, withdrawAmount, withdrawDuration, agree);
     }
+
+    /**
+     * @dev callback called after poll finalization
+     * @param _agree True if user endorses the proposal else False
+     */
+    function vote(bool _agree) external override {
+        address _voter = _msgSigner();
+        require(pool.isMember(_voter), "NO_MEMBER");
+        _vote(_agree, _voter);
+    }
 }
