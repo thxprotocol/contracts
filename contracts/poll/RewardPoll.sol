@@ -51,4 +51,13 @@ contract RewardPoll is BasePoll {
         require(pool.isMember(_voter), "NO_MEMBER");
         _vote(_agree, _voter);
     }
+
+    /**
+     * @dev Revoke user`s vote
+     */
+    function revokeVote() external override {
+        address _voter = _msgSigner();
+        require(pool.isMember(_voter), "NO_MEMBER");
+        _revokeVote(_voter);
+    }
 }

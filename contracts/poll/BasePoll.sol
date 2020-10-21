@@ -111,9 +111,13 @@ contract BasePoll is RelayReceiver {
     /**
      * @dev Revoke user`s vote
      */
-    function revokeVote() external checkTime onlyGasStation {
-        address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
+    function revokeVote() external virtual {}
+
+    /**
+     * @dev Revoke user`s vote
+     * @param _voter The address of the voter
+     */
+    function _revokeVote(address _voter) internal checkTime onlyGasStation {
         require(votesByAddress[_voter].time > 0, "HAS_NOT_VOTED");
 
         uint256 voiceWeight = votesByAddress[_voter].weight;
