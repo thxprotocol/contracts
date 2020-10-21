@@ -13,7 +13,7 @@ async function HelpSign(object, name, args, account) {
   return tx.wait()
 }
 
-describe("Greeter", function() {
+describe("Happy flow", function() {
   let owner;
   let token;
   let assetPool;

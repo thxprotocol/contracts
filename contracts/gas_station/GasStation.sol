@@ -13,6 +13,8 @@ contract GasStation {
 
     mapping(address => uint256) private signerNonce;
 
+    event Result(bool success, bytes data);
+
     /**
      * @dev Get the latest nonce of a given signer
      * @param _signer Address of the signer
@@ -50,6 +52,6 @@ contract GasStation {
         (bool success, bytes memory returnData) = _to.call(
             abi.encodePacked(_call, signer)
         );
-        require(success, "NO_SUCCESS");
+        emit Result(success, returnData);
     }
 }
