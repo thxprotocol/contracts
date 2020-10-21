@@ -3,14 +3,15 @@
 
 pragma solidity ^0.6.4;
 
-import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import './access/Roles.sol';
-import './poll/WithdrawPoll.sol';
-import './poll/RewardPoll.sol';
+import "./Roles.sol";
+import "../poll/WithdrawPoll.sol";
+import "../poll/RewardPoll.sol";
+import "../gas_station/RelayReceiver.sol";
 
-contract AssetPool is Roles {
+contract AssetPool is Roles, RelayReceiver {
     using SafeMath for uint256;
 
     struct Reward {
@@ -21,20 +22,23 @@ contract AssetPool is Roles {
         RewardPoll poll;
         uint256 updated;
     }
-    mapping(address => bool) public polls;
     Reward[] public rewards;
-    WithdrawPoll[] public withdraws;
 
     uint256 public proposeWithdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
 
     IERC20 public token;
 
-    enum RewardState { Disabled, Enabled }
+    enum RewardState {Disabled, Enabled}
 
     event Withdrawn(address indexed member, uint256 reward);
     event Deposited(address indexed member, uint256 amount);
-    event RewardPollCreated(address indexed member, address poll, uint256 id, uint256 proposal);
+    event RewardPollCreated(
+        address indexed member,
+        address poll,
+        uint256 id,
+        uint256 proposal
+    );
     event WithdrawPollCreated(address indexed member, address poll);
 
     /**
@@ -42,47 +46,28 @@ contract AssetPool is Roles {
      * @param _owner Address of the owner of the asset pool
      * @param _tokenAddress Address of the ERC20 token used for this pool
      */
-    function initialize(address _owner, address _tokenAddress) public initializer {
+    constructor(
+        address _owner,
+        address _gasStation,
+        address _tokenAddress
+    ) public {
         __Roles_init(_owner);
         __owner = _owner;
+        __gasStation = _gasStation;
 
         token = IERC20(_tokenAddress);
         // TODO check balance of token (should be prefilled)
         // should be refilled by erc20 transfer function with _tokenAddress
     }
 
-    modifier useNonce(address _member, uint256 _nonce) {
-        validateNonce(_member, _nonce);
-        _;
-    }
-
-    mapping(address => uint256) public memberNonces;
-
-    /**
-     * @dev Get the latest nonce of a given voter
-     * @param _member Address of the voter
-     */
-    function getLatestNonce(address _member) public view returns (uint256) {
-        return memberNonces[_member];
-    }
-
-    /**
-     * @dev Validate a given nonce, reverts if nonce is not right
-     * @param _member Address of the voter
-     * @param _nonce Nonce of the voter
-     */
-    function validateNonce(address _member, uint256 _nonce) public {
-        require(polls[msg.sender] || msg.sender == owner(), 'UNEXPECTED_SENDER');
-        uint256 lastNonce = memberNonces[_member];
-        require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
-        memberNonces[_member] = _nonce;
-    }
-
     /**
      * @dev Set the duration for a withdraw poll poll.
      * @param _duration Duration in seconds
      */
-    function setProposeWithdrawPollDuration(uint256 _duration) public onlyOwner {
+    function setProposeWithdrawPollDuration(uint256 _duration)
+        public
+        onlyManager
+    {
         proposeWithdrawPollDuration = _duration;
     }
 
@@ -90,7 +75,7 @@ contract AssetPool is Roles {
      * @dev Set the reward poll duration
      * @param _duration Duration in seconds
      */
-    function setRewardPollDuration(uint256 _duration) public onlyOwner {
+    function setRewardPollDuration(uint256 _duration) public onlyManager {
         rewardPollDuration = _duration;
     }
 
@@ -99,12 +84,19 @@ contract AssetPool is Roles {
      * @param _withdrawAmount Initial size for the reward.
      * @param _withdrawDuration Initial duration for the reward.
      */
-    function addReward(uint256 _withdrawAmount, uint256 _withdrawDuration) public onlyOwner {
+    function addReward(uint256 _withdrawAmount, uint256 _withdrawDuration)
+        public
+        onlyOwner
+    {
         Reward memory reward;
 
         reward.id = rewards.length;
         reward.state = RewardState.Disabled;
-        reward.poll = _createRewardPoll(rewards.length, _withdrawAmount, _withdrawDuration);
+        reward.poll = _createRewardPoll(
+            rewards.length,
+            _withdrawAmount,
+            _withdrawDuration
+        );
         reward.updated = now;
 
         rewards.push(reward);
@@ -115,94 +107,64 @@ contract AssetPool is Roles {
      * @param _id References reward
      * @param _withdrawAmount New size for the reward.
      * @param _withdrawDuration New duration of the reward
-     * @param _member The address of the member
-     * @param _nonce Number only used once
-     * @param _sig The signed parameters
      */
     function updateReward(
         uint256 _id,
         uint256 _withdrawAmount,
-        uint256 _withdrawDuration,
-        address _member,
-        uint256 _nonce,
-        bytes calldata _sig
-    )
-        public
-        // _member could be deleted from arguments, as it recoverd
-        onlyOwner
-        onlyIfMember(_member)
-        useNonce(_member, _nonce)
-    {
-        bytes32 message = Signature.prefixed(
-            keccak256(abi.encodePacked(owner(), _id, _withdrawAmount, _withdrawDuration, _nonce, this))
+        uint256 _withdrawDuration
+    ) public onlyGasStation {
+        require(isMember(_msgSigner()), "NOT_MEMBER");
+
+        require(rewards[_id].poll.finalized(), "IS_NOT_FINALIZED");
+        require(_withdrawAmount != rewards[_id].withdrawAmount, "IS_EQUAL");
+
+        rewards[_id].poll = _createRewardPoll(
+            _id,
+            _withdrawAmount,
+            _withdrawDuration
         );
-        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
-
-        require(rewards[_id].poll.finalized(), 'IS_NOT_FINALIZED');
-        require(_withdrawAmount != rewards[_id].withdrawAmount, 'IS_EQUAL');
-
-        rewards[_id].poll = _createRewardPoll(_id, _withdrawAmount, _withdrawDuration);
     }
 
     /**
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
-     * @param _member The address of the member
-     * @param _nonce Number only used once
-     * @param _sig The signed parameters
+     * @param _beneficiary Address of the beneficiary
      */
-    function claimWithdraw(
-        uint256 _id,
-        address _member,
-        uint256 _nonce,
-        bytes calldata _sig
-    )
+    function claimRewardFor(uint256 _id, address _beneficiary)
         public
-        // _member could be deleted from arguments, as it recoverd
-        onlyOwner
-        onlyIfMember(_member)
-        useNonce(_member, _nonce)
+        onlyGasStation
     {
-        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(owner(), _id, _nonce, this)));
-        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
-        require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
+        require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
+        require(isMember(_beneficiary), "NOT_MEMBER");
 
-        WithdrawPoll withdraw = _createWithdrawPoll(
+        _createWithdrawPoll(
             rewards[_id].withdrawAmount,
             rewards[_id].withdrawDuration,
-            _member
+            _beneficiary
         );
+    }
 
-        withdraws.push(withdraw);
+    /**
+     * @dev Creates a withdraw poll for a reward.
+     * @param _id Reference id of the reward
+     */
+    function claimReward(uint256 _id) public onlyGasStation {
+        claimRewardFor(_id, _msgSigner());
     }
 
     /**
      * @dev Creates a custom withdraw proposal.
      * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
-     * @param _member The address of the member
-     * @param _nonce Number only used once
-     * @param _sig The signed parameters
      */
-    function proposeWithdraw(
-        uint256 _amount,
-        address _beneficiary,
-        address _member,
-        uint256 _nonce,
-        bytes calldata _sig
-    )
+    function proposeWithdraw(uint256 _amount, address _beneficiary)
         public
-        // _beneficiary could be deleted from arguments, as it recoverd
-        onlyOwner
-        onlyIfMember(_beneficiary)
-        onlyIfMember(_member)
-        useNonce(_member, _nonce)
+        onlyGasStation
     {
-        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(owner(), _amount, _beneficiary, _nonce, this)));
-        require(Signature.recoverSigner(message, _sig) == _member, 'WRONG_SIG');
+        require(isMember(_msgSigner()), "NOT_MEMBER");
+        require(isMember(_beneficiary), "NOT_MEMBER");
 
-        WithdrawPoll withdraw = _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
-        withdraws.push(withdraw);
+        _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
     }
 
     /**
@@ -215,19 +177,17 @@ contract AssetPool is Roles {
         uint256 _amount,
         uint256 _duration,
         address _beneficiary
-    ) internal returns (WithdrawPoll) {
+    ) internal {
         WithdrawPoll poll = new WithdrawPoll(
             _beneficiary,
             _amount,
             now + _duration,
             address(this),
-            owner(),
+            __gasStation,
             address(token)
         );
 
         emit WithdrawPollCreated(_beneficiary, address(poll));
-        polls[address(poll)] = true;
-        return poll;
     }
 
     /**
@@ -247,9 +207,8 @@ contract AssetPool is Roles {
             _withdrawDuration,
             now + rewardPollDuration,
             address(this),
-            owner()
+            __gasStation
         );
-        polls[address(poll)] = true;
         return poll;
     }
 

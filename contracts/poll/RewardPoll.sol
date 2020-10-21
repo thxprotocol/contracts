@@ -1,11 +1,10 @@
-// contracts/poll/RewardPoll.sol
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.6.4;
 
-import '@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import './BasePoll.sol';
+import "./BasePoll.sol";
 
 contract RewardPoll is BasePoll {
     using SafeMath for uint256;
@@ -21,7 +20,7 @@ contract RewardPoll is BasePoll {
      * @param _withdrawDuration Duration for voting of the withdrawal
      * @param _endtime Poll end time
      * @param _poolAddress Asset Pool contract address
-     * @param _voteAdmin Address that is able to send signed message to vote and revokeVote
+     * @param _gasStation Address of the gas station
      */
     constructor(
         uint256 _id,
@@ -29,8 +28,8 @@ contract RewardPoll is BasePoll {
         uint256 _withdrawDuration,
         uint256 _endtime,
         address _poolAddress,
-        address _voteAdmin
-    ) public BasePoll(_poolAddress, _voteAdmin, now, _endtime) {
+        address _gasStation
+    ) public BasePoll(_poolAddress, _gasStation, now, _endtime) {
         id = _id;
         withdrawAmount = _withdrawAmount;
         withdrawDuration = _withdrawDuration;

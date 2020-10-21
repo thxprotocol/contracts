@@ -1,4 +1,3 @@
-// contracts/rewards/Rewards.sol
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.6.4;
@@ -38,17 +37,4 @@ interface IAssetPool {
         address _beneficiary,
         uint256 _amount
     ) external;
-
-    /**
-     * @dev Validate a given nonce, reverts if nonce is not right
-     * @param _member Address of the voter
-     * @param _nonce Nonce of the voter
-     */
-    function validateNonce(address _member, uint256 _nonce) external;
-
-    /**
-     * @dev Get the latest nonce of a given voter
-     * @param _member Address of the voter
-     */
-    function getLatestNonce(address _member) external view returns (uint256);
 }

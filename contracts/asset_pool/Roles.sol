@@ -3,51 +3,40 @@
 
 pragma solidity ^0.6.4;
 
-import '@openzeppelin/contracts-ethereum-package/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts-ethereum-package/contracts/utils/EnumerableSet.sol';
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Roles is AccessControlUpgradeSafe {
-    bytes32 public constant MEMBER_ROLE = keccak256('MEMBER_ROLE');
-    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
-
-    EnumerableSet.AddressSet _members;
-    EnumerableSet.AddressSet _managers;
-
-    event MemberAdded(address account);
-    event MemberRemoved(address account);
-    event ManagerAdded(address account);
-    event ManagerRemoved(address account);
-
-    modifier onlyMember() {
-        require(
-            hasRole(MEMBER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            'caller is not a member or role admin'
-        );
-        _;
-    }
-
-    modifier onlyIfMember(address _member) {
-        require(isMember(_member), 'NO_MEMBER');
-        _;
-    }
-
-    modifier onlyManager() {
-        require(
-            hasRole(MANAGER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            'caller is not a manager or role admin'
-        );
-        _;
-    }
+contract Roles is AccessControl {
+    address internal __owner;
+    address internal __gasStation;
+    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /**
      * @dev Initializes the asset pool and sets the owner. Called when contract upgrades are available.
      * @param _owner Address of the owner of the asset pool
      */
     function __Roles_init(address _owner) public {
-        __AccessControl_init();
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MEMBER_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
+    }
+
+    modifier onlyMember() {
+        require(
+            hasRole(MEMBER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "caller is not a member or role admin"
+        );
+        _;
+    }
+
+    modifier onlyManager() {
+        require(
+            hasRole(MANAGER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "caller is not a manager or role admin"
+        );
+        _;
     }
 
     /**
@@ -56,8 +45,6 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function addMember(address _account) public onlyMember {
         grantRole(MEMBER_ROLE, _account);
-        _members.add(_account);
-        emit MemberAdded(_account);
     }
 
     /**
@@ -74,8 +61,6 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function removeMember(address _account) public onlyManager {
         revokeRole(MEMBER_ROLE, _account);
-        _members.remove(_account);
-        emit MemberRemoved(_account);
     }
 
     /**
@@ -84,8 +69,6 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function addManager(address _account) public onlyManager {
         grantRole(MANAGER_ROLE, _account);
-        _managers.add(_account);
-        emit ManagerAdded(_account);
     }
 
     /**
@@ -102,11 +85,7 @@ contract Roles is AccessControlUpgradeSafe {
      */
     function removeManager(address _account) public onlyManager {
         revokeRole(MANAGER_ROLE, _account);
-        _managers.remove(_account);
-        emit ManagerRemoved(_account);
     }
-
-    address internal __owner;
 
     /**
      * @dev Returns the address of the current owner.
@@ -119,7 +98,25 @@ contract Roles is AccessControlUpgradeSafe {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(__owner == msg.sender, 'Ownable: caller is not the owner');
+        require(__owner == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function gasStation() public view returns (address) {
+        return __gasStation;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyGasStation() {
+        require(
+            __gasStation == msg.sender,
+            "Ownable: caller is not the gasStation"
+        );
         _;
     }
 }
