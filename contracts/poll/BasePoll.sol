@@ -27,7 +27,6 @@ contract BasePoll is RelayReceiver {
     uint256 public totalVoted = 0;
 
     bool public bypassVotes = false;
-    bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
 
@@ -38,11 +37,6 @@ contract BasePoll is RelayReceiver {
 
     modifier onlyGasStation() {
         require(msg.sender == gasStation, "caller is not the gasStation");
-        _;
-    }
-
-    modifier notFinalized() {
-        require(!finalized, "IS_FINALIZED");
         _;
     }
 
@@ -138,16 +132,13 @@ contract BasePoll is RelayReceiver {
     /**
      * Finalize poll and call onPollFinish callback with result
      */
-    function tryToFinalize() public notFinalized returns (bool) {
-        if (now < endTime && bypassVotes == false) {
-            return false;
-        }
-        finalized = true;
+    function finalize() public {
+        require(now >= endTime || bypassVotes == true, "WRONG_STATE");
         onPollFinish(getCurrentApprovalState());
-        return true;
+        selfdestruct(payable(gasStation));
     }
 
-    function getCurrentApprovalState() internal virtual view returns (bool) {
+    function getCurrentApprovalState() public view returns (bool) {
         return yesCounter > noCounter || bypassVotes == true;
     }
 

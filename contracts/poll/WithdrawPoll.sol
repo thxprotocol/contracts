@@ -48,7 +48,7 @@ contract WithdrawPoll is BasePoll {
      */
     function withdraw() public onlyGasStation {
         if (state == WithdrawState.Pending) {
-            tryToFinalize();
+            finalize();
         }
         require(state == WithdrawState.Approved, "IS_NOT_APPROVED");
         require(_msgSigner() == beneficiary, "IS_NOT_BENEFICIARY");
@@ -68,7 +68,7 @@ contract WithdrawPoll is BasePoll {
      * @dev callback called after poll finalization
      */
     function onPollFinish(bool agree) internal override {
-        if (agree && finalized) {
+        if (agree) {
             state = WithdrawState.Approved;
         } else {
             state = WithdrawState.Rejected;

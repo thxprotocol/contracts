@@ -20,7 +20,6 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 withdrawDuration;
         RewardState state;
         RewardPoll poll;
-        uint256 updated;
     }
     Reward[] public rewards;
 
@@ -97,8 +96,6 @@ contract AssetPool is Roles, RelayReceiver {
             _withdrawAmount,
             _withdrawDuration
         );
-        reward.updated = now;
-
         rewards.push(reward);
     }
 
@@ -115,7 +112,10 @@ contract AssetPool is Roles, RelayReceiver {
     ) public onlyGasStation {
         require(isMember(_msgSigner()), "NOT_MEMBER");
 
-        require(rewards[_id].poll.finalized(), "IS_NOT_FINALIZED");
+        require(
+            rewards[_id].poll == RewardPoll(address(0)),
+            "IS_NOT_FINALIZED"
+        );
         require(_withdrawAmount != rewards[_id].withdrawAmount, "IS_EQUAL");
 
         rewards[_id].poll = _createRewardPoll(
@@ -226,6 +226,7 @@ contract AssetPool is Roles, RelayReceiver {
         bool _agree
     ) external {
         require(address(rewards[_id].poll) == msg.sender);
+        rewards[_id].poll = RewardPoll(address(0));
 
         if (_agree) {
             rewards[_id].withdrawAmount = _withdrawAmount;
