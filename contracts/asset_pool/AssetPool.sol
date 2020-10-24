@@ -189,8 +189,7 @@ contract AssetPool is Roles, RelayReceiver {
             _amount,
             now + _duration,
             address(this),
-            __gasStation,
-            address(token)
+            __gasStation
         );
         withdrawals[address(poll)] = true;
         emit WithdrawPollCreated(_beneficiary, address(poll));

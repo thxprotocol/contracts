@@ -14,7 +14,6 @@ contract WithdrawPoll is BasePoll {
 
     address public beneficiary;
     uint256 public amount;
-    IERC20 public token;
     WithdrawState public state;
 
     /**
@@ -24,22 +23,19 @@ contract WithdrawPoll is BasePoll {
      * @param _endtime Poll end time
      * @param _poolAddress Asset Pool contract address
      * @param _gasStation Address of the gas station
-     * @param _tokenAddress ERC20 compatible token contract address
      */
     constructor(
         address _beneficiary,
         uint256 _amount,
         uint256 _endtime,
         address _poolAddress,
-        address _gasStation,
-        address _tokenAddress
+        address _gasStation
     ) public BasePoll(_poolAddress, _gasStation, now, _endtime) {
         // TODO, to discuss, Could be a valid address if pools decide to burn tokens?
         require(address(_beneficiary) != address(0), "IS_INVALID_ADDRESS");
 
         beneficiary = _beneficiary;
         amount = _amount;
-        token = IERC20(_tokenAddress);
         state = WithdrawState.Pending;
     }
 
