@@ -23,6 +23,8 @@ contract AssetPool is Roles, RelayReceiver {
     }
     Reward[] public rewards;
 
+    mapping(address => bool) withdrawals;
+
     uint256 public proposeWithdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
 
@@ -87,6 +89,7 @@ contract AssetPool is Roles, RelayReceiver {
         public
         onlyOwner
     {
+        // todo verify amount
         Reward memory reward;
 
         reward.id = rewards.length;
@@ -110,6 +113,7 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _withdrawAmount,
         uint256 _withdrawDuration
     ) public onlyGasStation {
+        // todo verify amount
         require(isMember(_msgSigner()), "NOT_MEMBER");
 
         require(
@@ -134,8 +138,9 @@ contract AssetPool is Roles, RelayReceiver {
         public
         onlyGasStation
     {
-        require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
+        require(isMember(_msgSigner()), "NOT_MEMBER");
         require(isMember(_beneficiary), "NOT_MEMBER");
+        require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
 
         _createWithdrawPoll(
             rewards[_id].withdrawAmount,
@@ -161,6 +166,7 @@ contract AssetPool is Roles, RelayReceiver {
         public
         onlyGasStation
     {
+        // TODO verify amount
         require(isMember(_msgSigner()), "NOT_MEMBER");
         require(isMember(_beneficiary), "NOT_MEMBER");
 
@@ -186,7 +192,7 @@ contract AssetPool is Roles, RelayReceiver {
             __gasStation,
             address(token)
         );
-
+        withdrawals[address(poll)] = true;
         emit WithdrawPollCreated(_beneficiary, address(poll));
     }
 
@@ -225,7 +231,8 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _withdrawDuration,
         bool _agree
     ) external {
-        require(address(rewards[_id].poll) == msg.sender);
+        // This ensures only 1 onRewardPollFinish call is possible
+        require(address(rewards[_id].poll) == msg.sender, "NOT_POLL");
         rewards[_id].poll = RewardPoll(address(0));
 
         if (_agree) {
@@ -242,19 +249,15 @@ contract AssetPool is Roles, RelayReceiver {
 
     /**
      * @dev callback called after a withdraw
-     * @param _withdraw Address of the withdrawal
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
      */
-    function onWithdrawal(
-        address _withdraw,
-        address _beneficiary,
-        uint256 _amount
-    ) external {
-        require(_withdraw == msg.sender);
+    function onWithdrawal(address _beneficiary, uint256 _amount) external {
+        // This ensures only 1 onWithdrawal call is possible
+        require(withdrawals[msg.sender], "NOT_POLL");
+        withdrawals[msg.sender] = false;
 
         token.transfer(_beneficiary, _amount);
-
         emit Withdrawn(_beneficiary, _amount);
     }
 }

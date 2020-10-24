@@ -7,7 +7,7 @@ const RewardState = {
   Enabled: 1
 }
 
-describe("Test Reward/poll)", function() {
+describe("Test Reward/poll", function() {
     let AssetPool;
 
     let gasStation;
@@ -194,5 +194,11 @@ describe("Test Reward/poll)", function() {
         expect(reward.state).to.be.eq(RewardState.Enabled);
       });
     })
-})
+    // + finalize reward (not approved)
+    // + update reward
+    // + testen van poll lengths
+    // new: bypassvotes
 
+    // aparte tests voor rewards
+    // + reward flow
+})

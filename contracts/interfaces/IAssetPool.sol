@@ -30,13 +30,8 @@ interface IAssetPool {
 
     /**
      * @dev Withdrawal callback
-     * @param _reward Address of the reward
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
      */
-    function onWithdrawal(
-        address _reward,
-        address _beneficiary,
-        uint256 _amount
-    ) external;
+    function onWithdrawal(address _beneficiary, uint256 _amount) external;
 }

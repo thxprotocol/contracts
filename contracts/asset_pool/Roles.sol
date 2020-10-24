@@ -25,7 +25,7 @@ contract Roles is AccessControl {
         require(
             hasRole(MEMBER_ROLE, msg.sender) ||
                 hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "caller is not a member or role admin"
+            "NOT_MEMBER"
         );
         _;
     }
@@ -34,7 +34,7 @@ contract Roles is AccessControl {
         require(
             hasRole(MANAGER_ROLE, msg.sender) ||
                 hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "caller is not a manager or role admin"
+            "NOT_MANAGER"
         );
         _;
     }
@@ -99,7 +99,7 @@ contract Roles is AccessControl {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(__owner == msg.sender, "Ownable: caller is not the owner");
+        require(__owner == msg.sender, "NOT_OWNER");
         _;
     }
 
@@ -116,7 +116,7 @@ contract Roles is AccessControl {
     modifier onlyGasStation() {
         require(
             __gasStation == msg.sender,
-            "Ownable: caller is not the gasStation"
+            "NOT_GASSTATION"
         );
         _;
     }

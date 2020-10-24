@@ -52,16 +52,10 @@ contract WithdrawPoll is BasePoll {
         }
         require(state == WithdrawState.Approved, "IS_NOT_APPROVED");
         require(_msgSigner() == beneficiary, "IS_NOT_BENEFICIARY");
-        // check below could be deleted to save gast costs, as onWithdrawal will fail
-        // if the balance is insufficient.
-        require(
-            token.balanceOf(address(pool)) >= amount,
-            "INSUFFICIENT_BALANCE"
-        );
 
         state = WithdrawState.Withdrawn;
 
-        pool.onWithdrawal(address(this), beneficiary, amount);
+        pool.onWithdrawal(beneficiary, amount);
     }
 
     /**
