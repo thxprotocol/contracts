@@ -187,6 +187,9 @@ contract AssetPool is Initializable, OwnableUpgradeSafe, Roles {
             address(this),
             owner()
         );
+
+        emit RewardPollCreated(msg.sender, address(poll), _id, _withdrawAmount);
+
         return poll;
     }
 
