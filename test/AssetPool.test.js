@@ -276,12 +276,67 @@ describe("Test AddReward", function() {
         expect(reward.state).to.be.eq(RewardState.Disabled);
       });
     })
+    describe("Bypass voting", async function() {
+        beforeEach(async function (){
+          await _beforeDeployment;
+
+          assetPool = await AssetPool.deploy(owner.getAddress(), gasStation.address, token.address);
+          await assetPool.addManager(voter.getAddress());
+          await assetPool.setProposeWithdrawPollDuration(180);
+          await assetPool.setRewardPollDuration(0);
+
+          await token.transfer(assetPool.address, parseEther("1000"));
+
+          tx = await assetPool.addReward(parseEther("5"), 250);
+          rewardTimestamp = (await ethers.provider.getBlock(tx.blockNumber)).timestamp;
+
+          reward = await assetPool.rewards(0);
+          rewardPoll = await ethers.getContractAt("RewardPoll", reward.poll);
+        })
+        it("Verify reward storage", async function() {
+          expect(reward.id).to.be.eq(0);
+          expect(reward.withdrawAmount).to.be.eq(parseEther("0"));
+          expect(reward.withdrawDuration).to.be.eq(0);
+          expect(reward.state).to.be.eq(RewardState.Disabled);
+        });
+        it("Verify reward poll storage", async function() {
+          expect(await rewardPoll.id()).to.be.eq(0);
+          expect(await rewardPoll.withdrawAmount()).to.be.eq(parseEther("5"));
+          expect(await rewardPoll.withdrawDuration()).to.be.eq(250);
+        });
+        it("Verify basepoll storage", async function() {
+          expect(await rewardPoll.pool()).to.be.eq(assetPool.address);
+          expect(await rewardPoll.gasStation()).to.be.eq(gasStation.address);
+          expect(await rewardPoll.startTime()).to.be.eq(rewardTimestamp);
+          expect(await rewardPoll.endTime()).to.be.eq(rewardTimestamp);
+          expect(await rewardPoll.yesCounter()).to.be.eq(0);
+          expect(await rewardPoll.noCounter()).to.be.eq(0);
+          expect(await rewardPoll.totalVoted()).to.be.eq(0);
+          expect(await rewardPoll.bypassVotes()).to.be.eq(true);
+        });
+        it("Verify current approval state", async function() {
+          expect(await rewardPoll.getCurrentApprovalState()).to.be.eq(true);
+        });
+        it("Finalize + Verify basepoll storage", async function() {
+          await rewardPoll.finalize();
+          expect(await ethers.provider.getCode(rewardPoll.address)).to.be.eq("0x");
+        });
+        it("Finalize + Verify reward storage", async function() {
+          await rewardPoll.finalize();
+          reward = await assetPool.rewards(0);
+          expect(reward.poll).to.be.eq(ZERO_ADDRESS)
+          expect(reward.id).to.be.eq(0);
+          expect(reward.withdrawAmount).to.be.eq(parseEther("5"));
+          expect(reward.withdrawDuration).to.be.eq(250);
+          expect(reward.state).to.be.eq(RewardState.Enabled);
+      });
+  })
+})
     // + testen van poll lengths
-    // new: bypassvotes
 
     // aparte tests voor rewards
     // + reward flow
-})
+
 
 describe("Test UpdateReward", function() {
     let AssetPool;
@@ -434,8 +489,3 @@ describe("Test UpdateReward", function() {
 
     })
 })
-
-
-
-
-  // Expect updated  withdrawAmount & withdrawDuration
