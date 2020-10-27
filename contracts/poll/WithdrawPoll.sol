@@ -38,10 +38,8 @@ contract WithdrawPoll is BasePoll {
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal override {
-        if (agree) {
-            pool.onWithdrawal(beneficiary, amount);
-        }
+    function onPollFinish(bool _agree) internal override {
+        pool.onWithdrawalPollFinish(beneficiary, amount, _agree);
     }
 
     /**

@@ -38,8 +38,8 @@ contract RewardPoll is BasePoll {
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal override {
-        pool.onRewardPollFinish(id, withdrawAmount, withdrawDuration, agree);
+    function onPollFinish(bool _agree) internal override {
+        pool.onRewardPollFinish(id, withdrawAmount, withdrawDuration, _agree);
     }
 
     /**

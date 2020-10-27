@@ -153,11 +153,11 @@ describe("Test auth", async function() {
 
         })
         it("onWithdrawal", async function () {
-            await expect(assetPool.connect(owner).onWithdrawal(await owner.getAddress(), 1)).to.be.revertedWith("NOT_POLL")
-            await expect(assetPool.connect(manager).onWithdrawal(await owner.getAddress(), 1)).to.be.revertedWith("NOT_POLL")
-            await expect(assetPool.connect(member).onWithdrawal(await owner.getAddress(), 1)).to.be.revertedWith("NOT_POLL")
+            await expect(assetPool.connect(owner).onWithdrawalPollFinish(await owner.getAddress(), 1, true)).to.be.revertedWith("NOT_POLL")
+            await expect(assetPool.connect(manager).onWithdrawalPollFinish(await owner.getAddress(), 1, true)).to.be.revertedWith("NOT_POLL")
+            await expect(assetPool.connect(member).onWithdrawalPollFinish(await owner.getAddress(), 1, true)).to.be.revertedWith("NOT_POLL")
           // gas station
-            tx = await helpSign(gasStation, assetPool, "onWithdrawal", [await owner.getAddress(), 1], owner)
+            tx = await helpSign(gasStation, assetPool, "onWithdrawalPollFinish", [await owner.getAddress(), 1, true], owner)
             expect(tx.error).to.be.eq("NOT_POLL");
 
         })

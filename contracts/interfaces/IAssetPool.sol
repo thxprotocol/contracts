@@ -32,6 +32,11 @@ interface IAssetPool {
      * @dev Withdrawal callback
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
+     * @param _agree True if the reward should apply or change
      */
-    function onWithdrawal(address _beneficiary, uint256 _amount) external;
+    function onWithdrawalPollFinish(
+        address _beneficiary,
+        uint256 _amount,
+        bool _agree
+    ) external;
 }

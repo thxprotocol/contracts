@@ -145,5 +145,5 @@ contract BasePoll is RelayReceiver {
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal virtual {}
+    function onPollFinish(bool _agree) internal virtual {}
 }

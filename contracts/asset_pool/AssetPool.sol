@@ -250,13 +250,20 @@ contract AssetPool is Roles, RelayReceiver {
      * @dev callback called after a withdraw
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
+     * @param _agree Bool for checking the result of the poll
      */
-    function onWithdrawal(address _beneficiary, uint256 _amount) external {
+    function onWithdrawalPollFinish(
+        address _beneficiary,
+        uint256 _amount,
+        bool _agree
+    ) external {
         // This ensures only 1 onWithdrawal call is possible
         require(withdrawals[msg.sender], "NOT_POLL");
         withdrawals[msg.sender] = false;
 
-        token.transfer(_beneficiary, _amount);
-        emit Withdrawn(_beneficiary, _amount);
+        if (_agree) {
+            token.transfer(_beneficiary, _amount);
+            emit Withdrawn(_beneficiary, _amount);
+        }
     }
 }
