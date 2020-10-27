@@ -28,7 +28,7 @@ describe("Test auth", async function() {
       await assetPool.addManager(manager.getAddress());
       await assetPool.addMember(member.getAddress());
     });
-    describe.only("AssetPool", async function() {
+    describe("AssetPool", async function() {
         it("setProposeWithdrawPollDuration", async function () {
             await assetPool.connect(owner).setProposeWithdrawPollDuration(180)
             await assetPool.connect(manager).setProposeWithdrawPollDuration(180)

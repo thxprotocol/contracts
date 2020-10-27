@@ -10,11 +10,8 @@ import "./BasePoll.sol";
 contract WithdrawPoll is BasePoll {
     using SafeMath for uint256;
 
-    enum WithdrawState {Pending, Approved, Rejected, Withdrawn}
-
     address public beneficiary;
     uint256 public amount;
-    WithdrawState public state;
 
     /**
      * @dev WithdrawPoll Constructor
@@ -36,22 +33,6 @@ contract WithdrawPoll is BasePoll {
 
         beneficiary = _beneficiary;
         amount = _amount;
-        state = WithdrawState.Pending;
-    }
-
-    /**
-     * @dev Withdraw accumulated balance for a beneficiary.
-     */
-    function withdraw() public onlyGasStation {
-        if (state == WithdrawState.Pending) {
-            finalize();
-        }
-        require(state == WithdrawState.Approved, "IS_NOT_APPROVED");
-        require(_msgSigner() == beneficiary, "IS_NOT_BENEFICIARY");
-
-        state = WithdrawState.Withdrawn;
-
-        pool.onWithdrawal(beneficiary, amount);
     }
 
     /**
@@ -59,9 +40,7 @@ contract WithdrawPoll is BasePoll {
      */
     function onPollFinish(bool agree) internal override {
         if (agree) {
-            state = WithdrawState.Approved;
-        } else {
-            state = WithdrawState.Rejected;
+            pool.onWithdrawal(beneficiary, amount);
         }
     }
 

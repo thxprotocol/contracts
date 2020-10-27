@@ -81,21 +81,15 @@ describe("Happy flow", function() {
     await helpSign(gasStation, withdraw, "vote", [true], voter)
   })
   it('Finalize withdraw claim', async function() {
+    expect(await token.balanceOf(voter.getAddress())).to.be.eq(0);
+    expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("1000"));
+
     await ethers.provider.send("evm_increaseTime", [180])
     await ethers.provider.send("evm_mine")
 
     const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
     tx = await withdraw.finalize();
-  })
-  it('Execute withdraw claim', async function() {
-    expect(await token.balanceOf(voter.getAddress())).to.be.eq(0);
-    expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("1000"));
 
-    const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
-    tx = await helpSign(gasStation, withdraw, "withdraw", [], voter)
-    // this one is currently failing as the withdraw() is executed after the contract is finalized
-    // which selfdestructs the contract.
-    // TODO execute withdraw logic on finalize
     expect(await token.balanceOf(voter.getAddress())).to.be.eq(parseEther("5"));
     expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("995"));
   })
