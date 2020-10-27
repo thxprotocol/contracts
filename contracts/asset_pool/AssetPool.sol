@@ -14,6 +14,9 @@ import "../gas_station/RelayReceiver.sol";
 contract AssetPool is Roles, RelayReceiver {
     using SafeMath for uint256;
 
+    uint256 constant ENABLE_REWARD = 2**250;
+    uint256 constant DISABLE_REWARD = 2**251;
+
     struct Reward {
         uint256 id;
         uint256 withdrawAmount;
@@ -89,7 +92,9 @@ contract AssetPool is Roles, RelayReceiver {
         public
         onlyOwner
     {
-        // todo verify amount
+        // TODO allow reward 0?
+        require(_withdrawAmount != ENABLE_REWARD, "NOT_VALID");
+        require(_withdrawAmount != DISABLE_REWARD, "NOT_VALID");
         Reward memory reward;
 
         reward.id = rewards.length;
@@ -115,12 +120,35 @@ contract AssetPool is Roles, RelayReceiver {
     ) public onlyGasStation {
         // todo verify amount
         require(isMember(_msgSigner()), "NOT_MEMBER");
-
+        Reward memory current = rewards[_id];
         require(
             rewards[_id].poll == RewardPoll(address(0)),
             "IS_NOT_FINALIZED"
         );
-        require(_withdrawAmount != rewards[_id].withdrawAmount, "IS_EQUAL");
+        // setting both params to initial state is not allowed
+        // this is a reserverd state for new rewards
+        require(
+            !(_withdrawAmount == 0 && _withdrawDuration == 0),
+            "NOT_ALLOWED"
+        );
+
+        require(
+            !(_withdrawAmount == ENABLE_REWARD &&
+                current.state == RewardState.Enabled),
+            "ALREADY_ENABLED"
+        );
+
+        require(
+            !(_withdrawAmount == DISABLE_REWARD &&
+                current.state == RewardState.Disabled),
+            "ALREADY_DISABLED"
+        );
+
+        require(
+            current.withdrawAmount != _withdrawAmount &&
+                current.withdrawDuration != _withdrawDuration,
+            "IS_EQUAL"
+        );
 
         rewards[_id].poll = _createRewardPoll(
             _id,
@@ -233,16 +261,25 @@ contract AssetPool is Roles, RelayReceiver {
         // This ensures only 1 onRewardPollFinish call is possible
         require(address(rewards[_id].poll) == msg.sender, "NOT_POLL");
         rewards[_id].poll = RewardPoll(address(0));
+        // If not agree, don't change anything
+        if (!_agree) {
+            return;
+        }
 
-        if (_agree) {
+        if (_withdrawAmount == ENABLE_REWARD) {
+            rewards[_id].state = RewardState.Enabled;
+        } else if (_withdrawAmount == DISABLE_REWARD) {
+            rewards[_id].state = RewardState.Disabled;
+        } else {
+            // initial state
+            if (
+                rewards[_id].withdrawAmount == 0 &&
+                rewards[_id].withdrawDuration == 0
+            ) {
+                rewards[_id].state = RewardState.Enabled;
+            }
             rewards[_id].withdrawAmount = _withdrawAmount;
             rewards[_id].withdrawDuration = _withdrawDuration;
-
-            if (_withdrawAmount > 0) {
-                rewards[_id].state = RewardState.Enabled;
-            } else {
-                rewards[_id].state = RewardState.Disabled;
-            }
         }
     }
 

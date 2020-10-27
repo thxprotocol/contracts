@@ -3,6 +3,7 @@ function hex2a(hex) {
     for (var i = 0; i < hex.length; i += 2) {
         var v = parseInt(hex.substr(i, 2), 16);
         if (v == 8) continue // http://www.fileformat.info/info/unicode/char/0008/index.htm
+        if (v == 15) continue
         if (v == 16) continue // http://www.fileformat.info/info/unicode/char/0010/index.htm
         if (v == 14) continue // https://www.fileformat.info/info/unicode/char/000e/index.htm
         if (v) str += String.fromCharCode(v);
