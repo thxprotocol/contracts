@@ -2,7 +2,7 @@
 
 pragma solidity ^0.6.4;
 
-import "../libraries/Signature.sol";
+import '../libraries/Signature.sol';
 
 contract GasStation {
     constructor(address _admin) public {
@@ -30,7 +30,7 @@ contract GasStation {
      */
     function validateNonce(address _signer, uint256 _nonce) private {
         uint256 lastNonce = signerNonce[_signer];
-        require(lastNonce + 1 == _nonce, "INVALID_NONCE");
+        require(lastNonce + 1 == _nonce, 'INVALID_NONCE');
         signerNonce[_signer] = _nonce;
     }
 
@@ -41,17 +41,13 @@ contract GasStation {
         uint256 _nonce,
         bytes memory _sig
     ) public {
-        require(msg.sender == admin, "ONLY_ADMIN");
+        require(msg.sender == admin, 'ONLY_ADMIN');
 
-        bytes32 message = Signature.prefixed(
-            keccak256(abi.encodePacked(_call, _to, this, _nonce))
-        );
+        bytes32 message = Signature.prefixed(keccak256(abi.encodePacked(_call, _to, this, _nonce)));
         address signer = Signature.recoverSigner(message, _sig);
 
         validateNonce(signer, _nonce);
-        (bool success, bytes memory returnData) = _to.call(
-            abi.encodePacked(_call, signer)
-        );
+        (bool success, bytes memory returnData) = _to.call(abi.encodePacked(_call, signer));
         emit Result(success, returnData);
     }
 }

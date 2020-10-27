@@ -3,13 +3,13 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import '@openzeppelin/contracts/access/AccessControl.sol';
 
 contract Roles is AccessControl {
     address internal __owner;
     address internal __gasStation;
-    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant MEMBER_ROLE = keccak256('MEMBER_ROLE');
+    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
     /**
      * @dev Initializes the asset pool and sets the owner. Called when contract upgrades are available.
@@ -22,20 +22,12 @@ contract Roles is AccessControl {
     }
 
     modifier onlyMember() {
-        require(
-            hasRole(MEMBER_ROLE, msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "NOT_MEMBER"
-        );
+        require(hasRole(MEMBER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'NOT_MEMBER');
         _;
     }
 
     modifier onlyManager() {
-        require(
-            hasRole(MANAGER_ROLE, msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "NOT_MANAGER"
-        );
+        require(hasRole(MANAGER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'NOT_MANAGER');
         _;
     }
 
@@ -52,8 +44,7 @@ contract Roles is AccessControl {
      * @param _account A member address
      */
     function isMember(address _account) public view returns (bool) {
-        return
-            hasRole(MEMBER_ROLE, _account) || hasRole(MANAGER_ROLE, _account);
+        return hasRole(MEMBER_ROLE, _account) || hasRole(MANAGER_ROLE, _account);
     }
 
     /**
@@ -99,7 +90,7 @@ contract Roles is AccessControl {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(__owner == msg.sender, "NOT_OWNER");
+        require(__owner == msg.sender, 'NOT_OWNER');
         _;
     }
 
@@ -114,10 +105,7 @@ contract Roles is AccessControl {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyGasStation() {
-        require(
-            __gasStation == msg.sender,
-            "NOT_GASSTATION"
-        );
+        require(__gasStation == msg.sender, 'NOT_GASSTATION');
         _;
     }
 }

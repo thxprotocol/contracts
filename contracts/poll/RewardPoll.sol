@@ -2,9 +2,9 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import "./BasePoll.sol";
+import './BasePoll.sol';
 
 contract RewardPoll is BasePoll {
     using SafeMath for uint256;
@@ -48,7 +48,7 @@ contract RewardPoll is BasePoll {
      */
     function vote(bool _agree) external override {
         address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
+        require(pool.isMember(_voter), 'NO_MEMBER');
         _vote(_agree, _voter);
     }
 
@@ -57,7 +57,7 @@ contract RewardPoll is BasePoll {
      */
     function revokeVote() external override {
         address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
+        require(pool.isMember(_voter), 'NO_MEMBER');
         _revokeVote(_voter);
     }
 }

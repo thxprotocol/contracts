@@ -2,10 +2,10 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import "./BasePoll.sol";
+import './BasePoll.sol';
 
 contract WithdrawPoll is BasePoll {
     using SafeMath for uint256;
@@ -29,7 +29,7 @@ contract WithdrawPoll is BasePoll {
         address _gasStation
     ) public BasePoll(_poolAddress, _gasStation, now, _endtime) {
         // TODO, to discuss, Could be a valid address if pools decide to burn tokens?
-        require(address(_beneficiary) != address(0), "IS_INVALID_ADDRESS");
+        require(address(_beneficiary) != address(0), 'IS_INVALID_ADDRESS');
 
         beneficiary = _beneficiary;
         amount = _amount;
@@ -48,7 +48,7 @@ contract WithdrawPoll is BasePoll {
      */
     function vote(bool _agree) external override {
         address _voter = _msgSigner();
-        require(pool.isManager(_voter), "NO_MANAGER");
+        require(pool.isManager(_voter), 'NO_MANAGER');
         _vote(_agree, _voter);
     }
 
@@ -57,7 +57,7 @@ contract WithdrawPoll is BasePoll {
      */
     function revokeVote() external override {
         address _voter = _msgSigner();
-        require(pool.isManager(_voter), "NO_MANAGER");
+        require(pool.isManager(_voter), 'NO_MANAGER');
         _revokeVote(_voter);
     }
 }
