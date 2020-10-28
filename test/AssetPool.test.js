@@ -404,6 +404,26 @@ describe("Test UpdateReward", function() {
         reward = await assetPool.rewards(0);
         // update reward
     });
+    it("Verify updateReward storage contract", async function() {
+      expect(reward.poll).to.be.eq(ZERO_ADDRESS)
+      tx = await helpSign(gasStation, assetPool, "updateReward", [0, parseEther("10"), 300], voter)
+      reward = await assetPool.rewards(0);
+      expect(reward.poll).to.not.be.eq(ZERO_ADDRESS)
+      rewardPoll = await ethers.getContractAt("RewardPoll", reward.poll);
+
+      expect(await rewardPoll.id()).to.be.eq(0);
+      expect(await rewardPoll.withdrawAmount()).to.be.eq(parseEther("10"));
+      expect(await rewardPoll.withdrawDuration()).to.be.eq(300);
+      expect(await rewardPoll.pool()).to.be.eq(assetPool.address);
+      expect(await rewardPoll.gasStation()).to.be.eq(gasStation.address);
+      expect(await rewardPoll.startTime()).to.be.eq(tx.timestamp);
+      expect(await rewardPoll.endTime()).to.be.eq(tx.timestamp + 180);
+      expect(await rewardPoll.yesCounter()).to.be.eq(0);
+      expect(await rewardPoll.noCounter()).to.be.eq(0);
+      expect(await rewardPoll.totalVoted()).to.be.eq(0);
+      expect(await rewardPoll.bypassVotes()).to.be.eq(false);
+      expect(await rewardPoll.getCurrentApprovalState()).to.be.eq(false);
+    });
     it("approve", async function() {
       res = await updateReward(gasStation, assetPool, [0, parseEther("10"), 300], voter, true)
       reward = res.data
@@ -486,6 +506,21 @@ describe("Test UpdateReward", function() {
       expect(reward.withdrawAmount).to.be.eq(parseEther("50"));
       expect(reward.withdrawDuration).to.be.eq(120);
       expect(reward.state).to.be.eq(RewardState.Disabled);
+
+    })
+    it("Update reward bypass votes", async function() {
+      await assetPool.setRewardPollDuration(0);
+
+      err = await helpSign(gasStation, assetPool, "updateReward", [0, parseEther("500"), 1200], owner)
+      reward = await assetPool.rewards(0);
+      rewardPoll = await ethers.getContractAt("RewardPoll", reward.poll);
+      await rewardPoll.finalize()
+      reward = await assetPool.rewards(0);
+      expect(reward.poll).to.be.eq(ZERO_ADDRESS)
+      expect(reward.id).to.be.eq(0);
+      expect(reward.withdrawAmount).to.be.eq(parseEther("500"));
+      expect(reward.withdrawDuration).to.be.eq(1200);
+      expect(reward.state).to.be.eq(RewardState.Enabled);
 
     })
 })
