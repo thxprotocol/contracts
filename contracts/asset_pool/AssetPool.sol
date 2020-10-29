@@ -129,7 +129,6 @@ contract AssetPool is Roles, RelayReceiver {
         require(isMember(_msgSigner()), 'NOT_MEMBER');
         require(isMember(_beneficiary), 'NOT_MEMBER');
         require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
-
         _createWithdrawPoll(rewards[_id].withdrawAmount, rewards[_id].withdrawDuration, _beneficiary);
     }
 
@@ -137,7 +136,7 @@ contract AssetPool is Roles, RelayReceiver {
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
      */
-    function claimReward(uint256 _id) public onlyGasStation {
+    function claimReward(uint256 _id) external {
         claimRewardFor(_id, _msgSigner());
     }
 

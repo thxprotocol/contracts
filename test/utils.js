@@ -30,14 +30,13 @@ module.exports = {
             for(const log of tx.logs) {
                 let event;
                 try {
-                    event =  await object.interface.parseLog(log)
+                    event = await object.interface.parseLog(log)
                 } catch (err) {
                     continue
                 }
                 logs.push(event);
             }
 
-          // TODO parse log from object?
           return {
             logs: logs,
             error: null,
