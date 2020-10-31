@@ -51,13 +51,4 @@ contract WithdrawPoll is BasePoll {
         require(pool.isManager(_voter), 'NO_MANAGER');
         _vote(_agree, _voter);
     }
-
-    /**
-     * @dev Revoke user`s vote
-     */
-    function revokeVote() external override {
-        address _voter = _msgSigner();
-        require(pool.isManager(_voter), 'NO_MANAGER');
-        _revokeVote(_voter);
-    }
 }
