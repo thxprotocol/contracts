@@ -12,6 +12,8 @@ interface IAssetPool {
      */
     function isMember(address) external view returns (bool);
 
+    function isManager(address) external view returns (bool);
+
     /**
      * @dev RewardPoll callback
      * @param _id The referenced reward
@@ -28,13 +30,13 @@ interface IAssetPool {
 
     /**
      * @dev Withdrawal callback
-     * @param _reward Address of the reward
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
+     * @param _agree True if the reward should apply or change
      */
-    function onWithdrawal(
-        address _reward,
+    function onWithdrawalPollFinish(
         address _beneficiary,
-        uint256 _amount
+        uint256 _amount,
+        bool _agree
     ) external;
 }

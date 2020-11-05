@@ -2,10 +2,10 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import "../interfaces/IAssetPool.sol";
-import "../gas_station/RelayReceiver.sol";
+import '../interfaces/IAssetPool.sol';
+import '../gas_station/RelayReceiver.sol';
 
 contract BasePoll is RelayReceiver {
     using SafeMath for uint256;
@@ -27,22 +27,16 @@ contract BasePoll is RelayReceiver {
     uint256 public totalVoted = 0;
 
     bool public bypassVotes = false;
-    bool public finalized = false;
 
     mapping(address => Vote) public votesByAddress;
 
     modifier checkTime() {
-        require(now >= startTime && now <= endTime, "IS_NO_VALID_TIME");
+        require(now >= startTime && now <= endTime, 'IS_NO_VALID_TIME');
         _;
     }
 
     modifier onlyGasStation() {
-        require(msg.sender == gasStation, "caller is not the gasStation");
-        _;
-    }
-
-    modifier notFinalized() {
-        require(!finalized, "IS_FINALIZED");
+        require(msg.sender == gasStation, 'caller is not the gasStation');
         _;
     }
 
@@ -61,9 +55,9 @@ contract BasePoll is RelayReceiver {
         uint256 _startTime,
         uint256 _endTime
     ) public {
-        require(_poolAddress != address(0), "IS_INVALID_ADDRESS");
-        require(_startTime >= now, "IS_NO_VALID_TIME");
-        require(_endTime >= _startTime, "IS_NO_VALID_TIME");
+        require(_poolAddress != address(0), 'IS_INVALID_ADDRESS');
+        require(_startTime >= now, 'IS_NO_VALID_TIME');
+        require(_endTime >= _startTime, 'IS_NO_VALID_TIME');
 
         pool = IAssetPool(_poolAddress);
 
@@ -77,14 +71,18 @@ contract BasePoll is RelayReceiver {
     }
 
     /**
-     * @dev Process user`s vote
+     * @dev callback called after poll finalization
      * @param _agree True if user endorses the proposal else False
      */
-    function vote(bool _agree) external checkTime onlyGasStation {
-        address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
-        require(votesByAddress[_voter].time == 0, "HAS_VOTED");
+    function vote(bool _agree) external virtual {}
 
+    /**
+     * @dev Process user`s vote
+     * @param _agree True if user endorses the proposal else False
+     * @param _voter The address of the voter
+     */
+    function _vote(bool _agree, address _voter) internal checkTime onlyGasStation {
+        require(votesByAddress[_voter].time == 0, 'HAS_VOTED');
         uint256 voiceWeight = 1;
 
         if (_agree) {
@@ -105,8 +103,7 @@ contract BasePoll is RelayReceiver {
      */
     function revokeVote() external checkTime onlyGasStation {
         address _voter = _msgSigner();
-        require(pool.isMember(_voter), "NO_MEMBER");
-        require(votesByAddress[_voter].time > 0, "HAS_NOT_VOTED");
+        require(votesByAddress[_voter].time > 0, 'HAS_NOT_VOTED');
 
         uint256 voiceWeight = votesByAddress[_voter].weight;
         bool agree = votesByAddress[_voter].agree;
@@ -126,26 +123,18 @@ contract BasePoll is RelayReceiver {
     /**
      * Finalize poll and call onPollFinish callback with result
      */
-    function tryToFinalize() public notFinalized returns (bool) {
-        if (now < endTime && bypassVotes == false) {
-            return false;
-        }
-        finalized = true;
-        onPollFinish(isSubjectApproved());
-        return true;
+    function finalize() public {
+        require(now >= endTime || bypassVotes == true, 'WRONG_STATE');
+        onPollFinish(getCurrentApprovalState());
+        selfdestruct(payable(gasStation));
     }
 
-    // why are there 2 view methods with the same return value?
-    function isNowApproved() public view returns (bool) {
-        return isSubjectApproved();
-    }
-
-    function isSubjectApproved() internal virtual view returns (bool) {
+    function getCurrentApprovalState() public view returns (bool) {
         return yesCounter > noCounter || bypassVotes == true;
     }
 
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal virtual {}
+    function onPollFinish(bool _agree) internal virtual {}
 }

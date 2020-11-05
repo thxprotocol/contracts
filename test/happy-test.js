@@ -1,25 +1,14 @@
 const { expect } = require("chai");
 const { parseEther } = require("ethers/lib/utils");
+const { helpSign } = require('./utils.js');
 
-let gasStation;
-
-async function HelpSign(object, name, args, account) {
-  nonce = await gasStation.getLatestNonce(account.getAddress());
-  nonce = parseInt(nonce) + 1;
-  const call = object.interface.encodeFunctionData(name, args);
-  const hash = web3.utils.soliditySha3(call, object.address, gasStation.address, nonce)
-  const sig = await account.signMessage(ethers.utils.arrayify(hash))
-  tx = await gasStation.call(call, object.address, nonce, sig);
-  return tx.wait()
-}
-
-describe("Greeter", function() {
+describe("Happy flow", function() {
   let owner;
   let token;
   let assetPool;
   let voter;
   let withdrawPoll;
-
+  let gasStation;
 
   before(async function () {
     [owner, voter] = await ethers.getSigners();
@@ -55,15 +44,15 @@ describe("Greeter", function() {
     await assetPool.addReward(parseEther("5"), 180);
 
   })
-  it('Add member', async function() {
-    expect(await assetPool.isMember(voter.getAddress())).to.equal(false);
-    await assetPool.addMember(voter.getAddress());
-    expect(await assetPool.isMember(voter.getAddress())).to.equal(true);
+  it('Add manager', async function() {
+    expect(await assetPool.isManager(voter.getAddress())).to.equal(false);
+    await assetPool.addManager(voter.getAddress());
+    expect(await assetPool.isManager(voter.getAddress())).to.equal(true);
   })
   it('Vote reward', async function() {
     const reward = await assetPool.rewards(0);
     let poll = await ethers.getContractAt("RewardPoll", reward.poll);
-    await HelpSign(poll, "vote", [true], voter)
+    await helpSign(gasStation, poll, "vote", [true], voter)
   })
   it('Finalize reward', async function() {
     await ethers.provider.send("evm_increaseTime", [180])
@@ -71,16 +60,15 @@ describe("Greeter", function() {
     let reward = await assetPool.rewards(0);
 
     let poll = await ethers.getContractAt("RewardPoll", reward.poll);
-    await poll.tryToFinalize();
+    await poll.finalize();
     reward = await assetPool.rewards(0);
 
 
     // todo check storage
   })
   it('Post withdraw claim for a reward', async function() {
-    const tx = await HelpSign(assetPool, "claimReward", [0], voter)
-    const event =  await assetPool.interface.parseLog(tx.logs[0])
-    withdrawPoll = await event.args.poll
+    const tx = await helpSign(gasStation, assetPool, "claimReward", [0], voter)
+    withdrawPoll = await tx.logs[0].args.poll
     const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
 
     const beneficiary = await withdraw.beneficiary();
@@ -90,21 +78,17 @@ describe("Greeter", function() {
   })
   it('Vote for withdraw claim', async function() {
     withdraw = await ethers.getContractAt("WithdrawPoll", await withdrawPoll);
-    await HelpSign(withdraw, "vote", [true], voter)
+    await helpSign(gasStation, withdraw, "vote", [true], voter)
   })
   it('Finalize withdraw claim', async function() {
+    expect(await token.balanceOf(voter.getAddress())).to.be.eq(0);
+    expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("1000"));
+
     await ethers.provider.send("evm_increaseTime", [180])
     await ethers.provider.send("evm_mine")
 
     const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
-    await withdraw.tryToFinalize();
-  })
-  it('Execute withdraw claim', async function() {
-    expect(await token.balanceOf(voter.getAddress())).to.be.eq(0);
-    expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("1000"));
-
-    const withdraw = await ethers.getContractAt("WithdrawPoll", withdrawPoll);
-    await HelpSign(withdraw, "withdraw", [], voter)
+    tx = await withdraw.finalize();
 
     expect(await token.balanceOf(voter.getAddress())).to.be.eq(parseEther("5"));
     expect(await token.balanceOf(assetPool.address)).to.be.eq(parseEther("995"));

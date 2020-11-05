@@ -2,9 +2,9 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import "./BasePoll.sol";
+import './BasePoll.sol';
 
 contract RewardPoll is BasePoll {
     using SafeMath for uint256;
@@ -38,7 +38,17 @@ contract RewardPoll is BasePoll {
     /**
      * @dev callback called after poll finalization
      */
-    function onPollFinish(bool agree) internal override {
-        pool.onRewardPollFinish(id, withdrawAmount, withdrawDuration, agree);
+    function onPollFinish(bool _agree) internal override {
+        pool.onRewardPollFinish(id, withdrawAmount, withdrawDuration, _agree);
+    }
+
+    /**
+     * @dev callback called after poll finalization
+     * @param _agree True if user endorses the proposal else False
+     */
+    function vote(bool _agree) external override {
+        address _voter = _msgSigner();
+        require(pool.isMember(_voter), 'NO_MEMBER');
+        _vote(_agree, _voter);
     }
 }

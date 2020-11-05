@@ -3,16 +3,19 @@
 
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import "./Roles.sol";
-import "../poll/WithdrawPoll.sol";
-import "../poll/RewardPoll.sol";
-import "../gas_station/RelayReceiver.sol";
+import './Roles.sol';
+import '../poll/WithdrawPoll.sol';
+import '../poll/RewardPoll.sol';
+import '../gas_station/RelayReceiver.sol';
 
 contract AssetPool is Roles, RelayReceiver {
     using SafeMath for uint256;
+
+    uint256 constant ENABLE_REWARD = 2**250;
+    uint256 constant DISABLE_REWARD = 2**251;
 
     struct Reward {
         uint256 id;
@@ -20,25 +23,21 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 withdrawDuration;
         RewardState state;
         RewardPoll poll;
-        uint256 updated;
     }
     Reward[] public rewards;
+
+    mapping(address => bool) withdrawals;
 
     uint256 public proposeWithdrawPollDuration = 0;
     uint256 public rewardPollDuration = 0;
 
     IERC20 public token;
 
-    enum RewardState {Disabled, Enabled}
+    enum RewardState { Disabled, Enabled }
 
     event Withdrawn(address indexed member, uint256 reward);
     event Deposited(address indexed member, uint256 amount);
-    event RewardPollCreated(
-        address indexed member,
-        address poll,
-        uint256 id,
-        uint256 proposal
-    );
+    event RewardPollCreated(address indexed member, address poll, uint256 id, uint256 proposal);
     event WithdrawPollCreated(address indexed member, address poll);
 
     /**
@@ -64,10 +63,7 @@ contract AssetPool is Roles, RelayReceiver {
      * @dev Set the duration for a withdraw poll poll.
      * @param _duration Duration in seconds
      */
-    function setProposeWithdrawPollDuration(uint256 _duration)
-        public
-        onlyManager
-    {
+    function setProposeWithdrawPollDuration(uint256 _duration) public onlyManager {
         proposeWithdrawPollDuration = _duration;
     }
 
@@ -84,21 +80,15 @@ contract AssetPool is Roles, RelayReceiver {
      * @param _withdrawAmount Initial size for the reward.
      * @param _withdrawDuration Initial duration for the reward.
      */
-    function addReward(uint256 _withdrawAmount, uint256 _withdrawDuration)
-        public
-        onlyOwner
-    {
+    function addReward(uint256 _withdrawAmount, uint256 _withdrawDuration) public onlyOwner {
+        // TODO allow reward 0?
+        require(_withdrawAmount != ENABLE_REWARD, 'NOT_VALID');
+        require(_withdrawAmount != DISABLE_REWARD, 'NOT_VALID');
         Reward memory reward;
 
         reward.id = rewards.length;
         reward.state = RewardState.Disabled;
-        reward.poll = _createRewardPoll(
-            rewards.length,
-            _withdrawAmount,
-            _withdrawDuration
-        );
-        reward.updated = now;
-
+        reward.poll = _createRewardPoll(rewards.length, _withdrawAmount, _withdrawDuration);
         rewards.push(reward);
     }
 
@@ -113,16 +103,21 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _withdrawAmount,
         uint256 _withdrawDuration
     ) public onlyGasStation {
-        require(isMember(_msgSigner()), "NOT_MEMBER");
+        // todo verify amount
+        require(isMember(_msgSigner()), 'NOT_MEMBER');
+        Reward memory current = rewards[_id];
+        require(rewards[_id].poll == RewardPoll(address(0)), 'IS_NOT_FINALIZED');
+        // setting both params to initial state is not allowed
+        // this is a reserverd state for new rewards
+        require(!(_withdrawAmount == 0 && _withdrawDuration == 0), 'NOT_ALLOWED');
 
-        require(rewards[_id].poll.finalized(), "IS_NOT_FINALIZED");
-        require(_withdrawAmount != rewards[_id].withdrawAmount, "IS_EQUAL");
+        require(!(_withdrawAmount == ENABLE_REWARD && current.state == RewardState.Enabled), 'ALREADY_ENABLED');
 
-        rewards[_id].poll = _createRewardPoll(
-            _id,
-            _withdrawAmount,
-            _withdrawDuration
-        );
+        require(!(_withdrawAmount == DISABLE_REWARD && current.state == RewardState.Disabled), 'ALREADY_DISABLED');
+
+        require(current.withdrawAmount != _withdrawAmount && current.withdrawDuration != _withdrawDuration, 'IS_EQUAL');
+
+        rewards[_id].poll = _createRewardPoll(_id, _withdrawAmount, _withdrawDuration);
     }
 
     /**
@@ -130,25 +125,18 @@ contract AssetPool is Roles, RelayReceiver {
      * @param _id Reference id of the reward
      * @param _beneficiary Address of the beneficiary
      */
-    function claimRewardFor(uint256 _id, address _beneficiary)
-        public
-        onlyGasStation
-    {
-        require(rewards[_id].state == RewardState.Enabled, "IS_NOT_ENABLED");
-        require(isMember(_beneficiary), "NOT_MEMBER");
-
-        _createWithdrawPoll(
-            rewards[_id].withdrawAmount,
-            rewards[_id].withdrawDuration,
-            _beneficiary
-        );
+    function claimRewardFor(uint256 _id, address _beneficiary) public onlyGasStation {
+        require(isMember(_msgSigner()), 'NOT_MEMBER');
+        require(isMember(_beneficiary), 'NOT_MEMBER');
+        require(rewards[_id].state == RewardState.Enabled, 'IS_NOT_ENABLED');
+        _createWithdrawPoll(rewards[_id].withdrawAmount, rewards[_id].withdrawDuration, _beneficiary);
     }
 
     /**
      * @dev Creates a withdraw poll for a reward.
      * @param _id Reference id of the reward
      */
-    function claimReward(uint256 _id) public onlyGasStation {
+    function claimReward(uint256 _id) external {
         claimRewardFor(_id, _msgSigner());
     }
 
@@ -157,12 +145,10 @@ contract AssetPool is Roles, RelayReceiver {
      * @param _amount Size of the withdrawal
      * @param _beneficiary Address of the beneficiary
      */
-    function proposeWithdraw(uint256 _amount, address _beneficiary)
-        public
-        onlyGasStation
-    {
-        require(isMember(_msgSigner()), "NOT_MEMBER");
-        require(isMember(_beneficiary), "NOT_MEMBER");
+    function proposeWithdraw(uint256 _amount, address _beneficiary) public onlyGasStation {
+        // TODO verify amount
+        require(isMember(_msgSigner()), 'NOT_MEMBER');
+        require(isMember(_beneficiary), 'NOT_MEMBER');
 
         _createWithdrawPoll(_amount, proposeWithdrawPollDuration, _beneficiary);
     }
@@ -178,15 +164,8 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _duration,
         address _beneficiary
     ) internal {
-        WithdrawPoll poll = new WithdrawPoll(
-            _beneficiary,
-            _amount,
-            now + _duration,
-            address(this),
-            __gasStation,
-            address(token)
-        );
-
+        WithdrawPoll poll = new WithdrawPoll(_beneficiary, _amount, now + _duration, address(this), __gasStation);
+        withdrawals[address(poll)] = true;
         emit WithdrawPollCreated(_beneficiary, address(poll));
     }
 
@@ -209,6 +188,7 @@ contract AssetPool is Roles, RelayReceiver {
             address(this),
             __gasStation
         );
+        emit RewardPollCreated(_msgSender(), address(poll), _id, _withdrawAmount);
         return poll;
     }
 
@@ -225,35 +205,46 @@ contract AssetPool is Roles, RelayReceiver {
         uint256 _withdrawDuration,
         bool _agree
     ) external {
-        require(address(rewards[_id].poll) == msg.sender);
+        // This ensures only 1 onRewardPollFinish call is possible
+        require(address(rewards[_id].poll) == msg.sender, 'NOT_POLL');
+        rewards[_id].poll = RewardPoll(address(0));
+        // If not agree, don't change anything
+        if (!_agree) {
+            return;
+        }
 
-        if (_agree) {
+        if (_withdrawAmount == ENABLE_REWARD) {
+            rewards[_id].state = RewardState.Enabled;
+        } else if (_withdrawAmount == DISABLE_REWARD) {
+            rewards[_id].state = RewardState.Disabled;
+        } else {
+            // initial state
+            if (rewards[_id].withdrawAmount == 0 && rewards[_id].withdrawDuration == 0) {
+                rewards[_id].state = RewardState.Enabled;
+            }
             rewards[_id].withdrawAmount = _withdrawAmount;
             rewards[_id].withdrawDuration = _withdrawDuration;
-
-            if (_withdrawAmount > 0) {
-                rewards[_id].state = RewardState.Enabled;
-            } else {
-                rewards[_id].state = RewardState.Disabled;
-            }
         }
     }
 
     /**
      * @dev callback called after a withdraw
-     * @param _withdraw Address of the withdrawal
      * @param _beneficiary Receiver of the reward
      * @param _amount Size of the reward
+     * @param _agree Bool for checking the result of the poll
      */
-    function onWithdrawal(
-        address _withdraw,
+    function onWithdrawalPollFinish(
         address _beneficiary,
-        uint256 _amount
+        uint256 _amount,
+        bool _agree
     ) external {
-        require(_withdraw == msg.sender);
+        // This ensures only 1 onWithdrawal call is possible
+        require(withdrawals[msg.sender], 'NOT_POLL');
+        withdrawals[msg.sender] = false;
 
-        token.transfer(_beneficiary, _amount);
-
-        emit Withdrawn(_beneficiary, _amount);
+        if (_agree) {
+            token.transfer(_beneficiary, _amount);
+            emit Withdrawn(_beneficiary, _amount);
+        }
     }
 }
